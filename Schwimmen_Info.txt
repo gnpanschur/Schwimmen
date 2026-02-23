@@ -25,7 +25,7 @@ Eine echte "Knock" (Klopfen) Mechanik: Wenn ein Spieler klopft, hat jeder andere
 Wie wird gespielt?
 Der Server wurde bereits in einem separaten schwarzen Fenster (Terminal) gestartet!
 
-Du kannst jetzt deinen Browser (z.B. Chrome oder Edge) öffnen und auf diese URL gehen: http://localhost:3002
+Du kannst jetzt deinen Browser (z.B. Chrome oder Edge) öffnen und auf diese URL gehen: https://schwimmen.onrender.com
 
 Schritt 1: Öffne mindestens 2 (bis zu 4) Browser-Tabs mit dieser URL.
 Schritt 2: Erstelle im ersten Tab ein Spiel (z.B. als "Spieler1" gegen "Spieler2").

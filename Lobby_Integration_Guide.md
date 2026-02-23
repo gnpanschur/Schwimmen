@@ -10,6 +10,11 @@ Trotzdem ist ein nachträglicher Einbau möglich, erfordert aber das Umschreiben
 
 ## Architektur der Lobby
 
+### Live Deployment (Render)
+Dieses Projekt ist aktuell live auf Render gehostet:
+- **URL:** [https://schwimmen.onrender.com](https://schwimmen.onrender.com)
+- **Service ID:** `srv-d6e3qa94tr6s73d72ob0`
+
 Die Lobby basiert auf **Node.js, Express und Socket.IO**. Sie besteht aus zwei Hauptkomponenten im Frontend:
 1. `div#lobby`: Der Startbildschirm mit den zwei Sektionen (Blau: Erstellen, Gelb: Beitreten).
 2. `div#game`: Der Bereich des eigentlichen Spiels (initial versteckt mit `display: none`).
