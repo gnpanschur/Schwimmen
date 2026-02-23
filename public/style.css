@@ -15,7 +15,7 @@ body {
 
 #app {
     text-align: center;
-    width: calc(125vw - 12.5px);
+    width: 100%;
     max-width: 800px;
 }
 
@@ -192,6 +192,28 @@ h2 {
 
 /* Responsive / Mobile Portrait */
 @media (max-width: 600px) {
+    body {
+        transform: scale(1) !important;
+        align-items: flex-start;
+        padding-top: 5px;
+    }
+
+    #app {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #game-board {
+        position: fixed !important;
+        left: 5px !important;
+        right: 5px !important;
+        bottom: 5px !important;
+        top: 110px !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+    }
+
     #player-left {
         left: 5px !important;
         top: 30% !important;
