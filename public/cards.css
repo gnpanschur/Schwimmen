@@ -1,14 +1,32 @@
+:root {
+    /* 
+     Ändere diesen Wert, um alle Karten auf einmal größer oder kleiner zu machen!
+     1.0 = Originalgröße
+     2.0 = 200% (Doppelt so groß wie das Original)
+     1.6 = 160% der Originalgröße (aktueller Wert)
+    */
+    --card-scale: 1.6;
+}
+
+/* Responsive / Mobile Portrait */
+@media (max-width: 600px) {
+    :root {
+        /* Karten auf Handys etwas kleiner als am PC */
+        --card-scale: 1.2;
+    }
+}
+
 .playing-card {
-    width: 80px;
-    height: 120px;
+    width: calc(80px * var(--card-scale));
+    height: calc(120px * var(--card-scale));
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    font-size: 24px;
+    font-size: calc(24px * var(--card-scale));
     font-weight: bold;
     user-select: none;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -18,19 +36,18 @@
 
 .playing-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
 }
 
 .playing-card.back {
-    background: repeating-linear-gradient(
-        45deg,
-        #606dbc,
-        #606dbc 10px,
-        #465298 10px,
-        #465298 20px
-    );
+    background: repeating-linear-gradient(45deg,
+            #606dbc,
+            #606dbc calc(10px * var(--card-scale)),
+            #465298 calc(10px * var(--card-scale)),
+            #465298 calc(20px * var(--card-scale)));
     border: 2px solid white;
 }
+
 .playing-card.back:hover {
     transform: translateY(-5px);
 }
@@ -40,24 +57,32 @@
     border: 2px dashed rgba(255, 255, 255, 0.5);
     box-shadow: none;
 }
+
 .playing-card.empty:hover {
     transform: none;
 }
 
-.suit-Heart, .suit-Diamond {
+.suit-Heart,
+.suit-Diamond {
     color: #e74c3c;
 }
-.suit-Club, .suit-Spade {
+
+.suit-Club,
+.suit-Spade {
     color: #2c3e50;
 }
 
 .mini-card {
-    width: 40px;
-    height: 60px;
+    width: calc(40px * var(--card-scale));
+    height: calc(60px * var(--card-scale));
     border-radius: 4px;
-    background: repeating-linear-gradient(45deg, #606dbc, #606dbc 5px, #465298 5px, #465298 10px);
+    background: repeating-linear-gradient(45deg,
+            #606dbc,
+            #606dbc calc(5px * var(--card-scale)),
+            #465298 calc(5px * var(--card-scale)),
+            #465298 calc(10px * var(--card-scale)));
     border: 1px solid white;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .player-info {
@@ -65,7 +90,7 @@
     font-weight: bold;
     margin-bottom: 5px;
     text-shadow: 1px 1px 2px black;
-    font-size: 1.2em;
+    font-size: 1.8em;
 }
 
 .active-turn {
@@ -87,16 +112,16 @@
 
 .top-left-suit {
     position: absolute;
-    top: 5px;
-    left: 5px;
-    font-size: 14px;
+    top: calc(5px * var(--card-scale));
+    left: calc(5px * var(--card-scale));
+    font-size: calc(14px * var(--card-scale));
 }
 
 .bottom-right-suit {
     position: absolute;
-    bottom: 5px;
-    right: 5px;
-    font-size: 14px;
+    bottom: calc(5px * var(--card-scale));
+    right: calc(5px * var(--card-scale));
+    font-size: calc(14px * var(--card-scale));
     transform: rotate(180deg);
 }
 
@@ -114,25 +139,14 @@
     font-size: 12px;
     display: none;
 }
+
 .playing-card:hover .discard-btn {
     display: block;
 }
 
-/* Responsive / Mobile Portrait */
+/* Responsive / Mobile Portrait modifications are now handled by redefining :root at the top */
 @media (max-width: 600px) {
-    .playing-card {
-        width: 60px !important;
-        height: 90px !important;
-        font-size: 18px !important;
-    }
-    .top-left-suit, .bottom-right-suit {
-        font-size: 11px !important;
-    }
-    .mini-card {
-        width: 30px !important;
-        height: 45px !important;
-    }
     .player-info {
-        font-size: 1em !important;
+        font-size: 1.5em !important;
     }
 }

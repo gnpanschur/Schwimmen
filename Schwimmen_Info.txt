@@ -1,3 +1,7 @@
+https://dashboard.render.com/web/srv-d6e3qa94tr6s73d72ob0
+
+
+
 Thirty-One Multiplayer WebApp
 Ich habe das Python Skript "Thirty-One" erfolgreich in ein Webbasiertes Multiplayer-Spiel umgewandelt!
 
@@ -25,7 +29,7 @@ Eine echte "Knock" (Klopfen) Mechanik: Wenn ein Spieler klopft, hat jeder andere
 Wie wird gespielt?
 Der Server wurde bereits in einem separaten schwarzen Fenster (Terminal) gestartet!
 
-Du kannst jetzt deinen Browser (z.B. Chrome oder Edge) öffnen und auf diese URL gehen: https://schwimmen.onrender.com
+Du kannst jetzt deinen Browser (z.B. Chrome oder Edge) öffnen und auf diese URL gehen: http://localhost:3002
 
 Schritt 1: Öffne mindestens 2 (bis zu 4) Browser-Tabs mit dieser URL.
 Schritt 2: Erstelle im ersten Tab ein Spiel (z.B. als "Spieler1" gegen "Spieler2").

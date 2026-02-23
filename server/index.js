@@ -156,9 +156,13 @@ io.on('connection', (socket) => {
 
     socket.on('swapAll', ({ roomId, playerId }) => {
         const room = rooms.get(roomId);
-        if (room && room.swapAll(playerId)) {
-            room.nextTurn();
-            io.to(roomId).emit('gameStateBroadcast');
+        if (room) {
+            const player = room.players.find(p => p.pId === playerId);
+            if (player && room.swapAll(playerId)) {
+                io.to(roomId).emit('toast_msg', `${player.name} hat alle 3 Karten getauscht!`);
+                room.nextTurn();
+                io.to(roomId).emit('gameStateBroadcast');
+            }
         }
     });
 
@@ -172,9 +176,13 @@ io.on('connection', (socket) => {
 
     socket.on('knock', ({ roomId, playerId }) => {
         const room = rooms.get(roomId);
-        if (room && room.knock(playerId)) {
-            room.nextTurn();
-            io.to(roomId).emit('gameStateBroadcast');
+        if (room) {
+            const player = room.players.find(p => p.pId === playerId);
+            if (player && room.knock(playerId)) {
+                io.to(roomId).emit('toast_msg', `${player.name} hat Stop gesagt!`);
+                room.nextTurn();
+                io.to(roomId).emit('gameStateBroadcast');
+            }
         }
     });
 });

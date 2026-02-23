@@ -69,9 +69,9 @@ function showToast(message) {
         container = document.createElement('div');
         container.id = 'toast-container';
         container.style.position = 'fixed';
-        container.style.top = '20px';
+        container.style.top = '50%';
         container.style.left = '50%';
-        container.style.transform = 'translateX(-50%)';
+        container.style.transform = 'translate(-50%, -50%)';
         container.style.zIndex = '9999';
         container.style.display = 'flex';
         container.style.flexDirection = 'column';
@@ -181,7 +181,11 @@ function renderCard(card, isMini = false) {
     el.className = `card playing-card ${isMini ? 'mini-card' : ''}`;
 
     if (!card) {
-        el.className += ' empty';
+        if (isMini) {
+            el.className += ' back';
+        } else {
+            el.className += ' empty';
+        }
         return el;
     }
 
@@ -254,6 +258,20 @@ function renderGameState(state) {
             }
         } else {
             endScreen.style.display = 'none';
+        }
+
+        // Render Turn Indicator
+        const turnIndicatorEl = document.getElementById('turn-indicator');
+        if (state.status === 'playing') {
+            const activePlayer = state.players.find(p => p.isCurrentTurn);
+            if (activePlayer) {
+                turnIndicatorEl.style.display = 'block';
+                turnIndicatorEl.textContent = `${activePlayer.name} ist am Zug!`;
+            } else {
+                turnIndicatorEl.style.display = 'none';
+            }
+        } else {
+            turnIndicatorEl.style.display = 'none';
         }
 
         // Render Pot
@@ -491,6 +509,10 @@ socket.on('roomCreated', ({ roomId }) => {
 
 socket.on('roomJoined', ({ roomId }) => {
     showGame(roomId);
+});
+
+socket.on('toast_msg', (msg) => {
+    showToast(msg);
 });
 
 socket.on('gameState', (state) => {

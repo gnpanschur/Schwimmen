@@ -88,7 +88,7 @@
 
         <div id="game" style="display: none;">
             <div class="header"
-                style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+                style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; margin-top: -15px;">
                 <h2 style="margin: 0;"><span style="color: #eef10a;">CODE = </span> <span id="currentRoom"></span>
                 </h2>
                 <div style="display: flex; justify-content: center; gap: 15px;">
@@ -112,9 +112,9 @@
             </div>
 
             <div id="game-board"
-                style="display: none; position: relative; width: 100%; height: 75vh; background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%); border-radius: 10px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;">
+                style="display: none; position: relative; width: 100%; height: calc(115vh - 80px); background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;">
                 <!-- End Screen Modal embedded -->
-                <div id="end-screen"
+                <div id="end-screen" class="end-modal"
                     style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border: 3px solid #FFD700; border-radius: 15px; padding: 40px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; color: white; min-width: 350px;">
                     <h2 id="end-title"
                         style="font-size: 2.5em; margin-bottom: 20px; color: #FFD700; text-align: center;">Runde Vorbei!
@@ -143,7 +143,11 @@
                 </div>
 
                 <div id="center-area"
-                    style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 20px; border: 2px solid white; padding: 20px; border-radius: 15px; background: rgba(0, 0, 0, 0.2);">
+                    style="position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 20px; border: 2px solid white; padding: 20px; border-radius: 15px; background: rgba(0, 0, 0, 0.2);">
+                    <div id="turn-indicator"
+                        style="display: none; color: white; background-color: rgba(92, 151, 155, 0.8); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2em; text-shadow: 1px 1px 2px black; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-top: -10px; margin-bottom: -15px;">
+                        Warten auf Spieler...
+                    </div>
                     <div id="pot-display"
                         style="display: block; color: gold; font-weight: bold; font-size: 1.5em; text-shadow: 2px 2px 5px black; margin-bottom: -10px;">
                         Kassa: 0 🪙
@@ -159,7 +163,7 @@
                 <div id="player-bottom" class="player-area bottom-area"
                     style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
                     <div id="my-name"
-                        style="color: white; font-weight: bold; font-size: 1.5em; margin-bottom: 15px; text-shadow: 1px 1px 2px black;">
+                        style="color: white; font-weight: bold; font-size: 2.0em; margin-bottom: 15px; text-shadow: 1px 1px 2px black;">
                     </div>
                     <div id="my-cards" style="display: flex; gap: 15px; justify-content: center; min-height: 120px;">
                     </div>
@@ -169,11 +173,11 @@
                             style="background: #f39c12; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #e67e22; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Alle
                             Tauschen</button>
                         <button id="passBtn" class="action-btn"
-                            style="background: #95a5a6; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #7f8c8d; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Schieben
+                            style="background: #6c757d; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #5c636a; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Weiter
                             (Passen)</button>
                         <button id="knockBtn" class="action-btn"
-                            style="background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #c0392b; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Klopfen
-                            (Knock)</button>
+                            style="background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #c0392b; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Stop
+                            (Klopfen)</button>
                     </div>
                 </div>
             </div>
