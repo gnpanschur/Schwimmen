@@ -279,12 +279,12 @@ function renderGameState(state) {
             potDisplay.style.display = 'block';
             let potText = "Kassa: ";
             for (let i = 0; i < state.pot; i++) {
-                potText += "🪙";
+                potText += '<span class="coin-emoji">🪙</span>';
             }
-            potDisplay.textContent = potText;
+            potDisplay.innerHTML = potText;
         } else {
             potDisplay.style.display = 'block';
-            potDisplay.textContent = "Kassa: 0 🪙";
+            potDisplay.innerHTML = 'Kassa: 0 <span class="coin-emoji">🪙</span>';
         }
 
         // Render Center Cards
@@ -314,7 +314,7 @@ function renderGameState(state) {
 
         const opponentPlayers = state.players.filter(p => !p.isOut); // Just an array for sorting
         if (me) {
-            let meCoinsText = me.coins === 0 ? "ist Gast" : "🪙".repeat(Math.max(0, me.coins));
+            let meCoinsText = me.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, me.coins));
             if (me.isOut) meCoinsText = "☠️";
 
             myNameEl.innerHTML = `${me.name} <span style="font-size: 0.8em; margin-left:10px;">${meCoinsText}</span> ${me.hasKnocked ? '<span class="knocked-indicator">geklopft!</span>' : ''}`;
@@ -388,7 +388,7 @@ function renderGameState(state) {
             if (oppPos === 2) targetId = 'player-right';
 
             const oppArea = document.getElementById(targetId);
-            let oppCoinsText = opp.coins === 0 ? "ist Gast" : "🪙".repeat(Math.max(0, opp.coins));
+            let oppCoinsText = opp.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, opp.coins));
             if (opp.isOut) oppCoinsText = "☠️";
 
             oppArea.innerHTML = `<div class="player-info" style="${opp.isOut ? 'opacity: 0.5;' : ''}">${opp.name} <span style="font-size: 0.8em; margin-left:5px;">${oppCoinsText}</span> ${opp.hasKnocked ? '<span class="knocked-indicator">geklopft!</span>' : ''}</div>

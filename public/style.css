@@ -254,15 +254,15 @@ h2 {
 
     .action-btn {
         padding: 8px 10px !important;
-        font-size: 0.9em !important;
+        font-size: 0.7em !important;
     }
 
     .header h2 {
-        font-size: 1.2em !important;
+        font-size: 1.0em !important;
     }
 
     #my-name {
-        font-size: 1.4em !important;
+        font-size: 1.2em !important;
     }
 
     .end-modal {
@@ -273,18 +273,18 @@ h2 {
     }
 
     .end-modal h2 {
-        font-size: 1.5em !important;
+        font-size: 1.3em !important;
         margin-bottom: 10px !important;
     }
 
     .end-modal #results {
-        font-size: 1em !important;
+        font-size: 0.8em !important;
         margin-bottom: 15px !important;
     }
 
     .end-modal button {
         padding: 5px 10px !important;
-        font-size: 0.9em !important;
+        font-size: 0.7em !important;
     }
 
     .end-modal div {
@@ -300,22 +300,28 @@ h2 {
     }
 
     .lobby-section h2 {
-        font-size: 1.1em !important;
+        font-size: 0.9em !important;
     }
 
     .input-group label {
-        font-size: 0.7em !important;
+        font-size: 0.5em !important;
     }
 
     #lobby input[type="text"] {
-        font-size: 1em !important;
+        font-size: 0.8em !important;
         padding: 6px !important;
     }
 
     #lobby button {
-        font-size: 1em !important;
+        font-size: 0.8em !important;
         padding: 8px !important;
         margin-top: 2px !important;
+    }
+
+    .coin-emoji {
+        font-size: 0.8em;
+        display: inline-block;
+        vertical-align: middle;
     }
 }
 
