@@ -239,4 +239,12 @@ h2 {
         width: 95%;
         max-width: 1400px;
     }
+
+    #player-left {
+        left: 10px !important;
+    }
+
+    #player-right {
+        right: 10px !important;
+    }
 }
