@@ -1,0 +1,138 @@
+.playing-card {
+    width: 80px;
+    height: 120px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    user-select: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    border: 1px solid #ddd;
+}
+
+.playing-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+.playing-card.back {
+    background: repeating-linear-gradient(
+        45deg,
+        #606dbc,
+        #606dbc 10px,
+        #465298 10px,
+        #465298 20px
+    );
+    border: 2px solid white;
+}
+.playing-card.back:hover {
+    transform: translateY(-5px);
+}
+
+.playing-card.empty {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.5);
+    box-shadow: none;
+}
+.playing-card.empty:hover {
+    transform: none;
+}
+
+.suit-Heart, .suit-Diamond {
+    color: #e74c3c;
+}
+.suit-Club, .suit-Spade {
+    color: #2c3e50;
+}
+
+.mini-card {
+    width: 40px;
+    height: 60px;
+    border-radius: 4px;
+    background: repeating-linear-gradient(45deg, #606dbc, #606dbc 5px, #465298 5px, #465298 10px);
+    border: 1px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.player-info {
+    color: white;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 2px black;
+    font-size: 1.2em;
+}
+
+.active-turn {
+    box-shadow: 0 0 15px 5px #f1c40f !important;
+    border: 2px solid #f1c40f;
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.knocked-indicator {
+    background: #e74c3c;
+    color: white;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+.top-left-suit {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    font-size: 14px;
+}
+
+.bottom-right-suit {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    font-size: 14px;
+    transform: rotate(180deg);
+}
+
+.discard-btn {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e67e22;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    display: none;
+}
+.playing-card:hover .discard-btn {
+    display: block;
+}
+
+/* Responsive / Mobile Portrait */
+@media (max-width: 600px) {
+    .playing-card {
+        width: 60px !important;
+        height: 90px !important;
+        font-size: 18px !important;
+    }
+    .top-left-suit, .bottom-right-suit {
+        font-size: 11px !important;
+    }
+    .mini-card {
+        width: 30px !important;
+        height: 45px !important;
+    }
+    .player-info {
+        font-size: 1em !important;
+    }
+}

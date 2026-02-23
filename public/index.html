@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Schwimmen</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="cards.css">
+    <style>
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            background-color: #e74c3c;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            font-size: 1.1em;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            text-align: center;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* Custom disabled look without swallowed clicks */
+        .btn-invalid {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1>Schwimmen</h1>
+
+        <div id="lobby">
+            <!-- Part A: Creator (Blue) -->
+            <div class="lobby-section create-section">
+                <h2>Ich erstelle ein Spiel: Geber</h2>
+                <div class="input-group">
+                    <label>1. Geber: gib deinen Namen ein</label>
+                    <input type="text" id="creatorName" placeholder="Dein Vorname" maxlength="12">
+                </div>
+                <div class="input-group">
+                    <label>2. Geber, gib die ersten drei Buchstaben deines Namens ein.</label>
+                    <input type="text" id="opponentNameInput" placeholder="3 Buchstaben = Passwort" maxlength="12">
+                </div>
+                <button id="createBtn">SPIEL ERSTELLEN</button>
+            </div>
+
+            <!-- Part B: Joiner (Yellow) -->
+            <div class="lobby-section join-section">
+                <h2>Ich spiele mit:</h2>
+                <div class="input-group">
+                    <label>1. Mitspieler: gib deinen Namen ein</label>
+                    <input type="text" id="joinerName" placeholder="Dein Vorname" maxlength="12">
+                </div>
+                <div class="input-group">
+                    <label>2. Passwort</label>
+                    <input type="text" id="joinerPassword" placeholder="Passwort" maxlength="12">
+                </div>
+                <!-- Note: Password/Room Code is implicitly the joiner's name -->
+                <button id="joinBtn">BEITRETEN</button>
+            </div>
+
+            <div class="lobby-controls">
+                <button id="infoBtn" class="icon-btn">ℹ️ Info</button>
+                <button id="fullscreenBtnLobby" class="icon-btn">⛶ Fullscreen</button>
+            </div>
+        </div>
+
+        <div id="game" style="display: none;">
+            <div class="header"
+                style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;">
+                <h2 style="margin: 0;"><span style="color: #eef10a;">CODE = </span> <span id="currentRoom"></span>
+                </h2>
+                <div style="display: flex; justify-content: center; gap: 15px;">
+                    <button id="gameInfoBtn" class="icon-btn"
+                        style="background-color: #3498db; color: white; padding: 5px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: bold;">ℹ️
+                        Info</button>
+                    <button id="gameFullscreenBtn" class="icon-btn"
+                        style="background-color: #9b59b6; color: white; padding: 5px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: bold;">⛶
+                        Vollbild</button>
+                    <button id="exitBtn" class="exit-btn" style="margin-left: 0;">EXIT</button>
+                </div>
+                <div id="status" style="font-size: 0.8em; margin-bottom: 5px; text-align: center;">Connecting...</div>
+            </div>
+
+            <div id="pre-game-lobby" style="margin-top: 20px; padding: 20px; text-align: center;">
+                <h3 style="color: white;">Spieler im Raum:</h3>
+                <ul id="player-list" style="list-style: none; padding: 0; color: white; font-size: 1.2em;"></ul>
+                <button id="startGameBtn"
+                    style="margin-top: 20px; padding: 15px 30px; font-size: 1.2em; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">START
+                    GAME</button>
+            </div>
+
+            <div id="game-board"
+                style="display: none; position: relative; width: 100%; height: 75vh; background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%); border-radius: 10px; margin-top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;">
+                <!-- End Screen Modal embedded -->
+                <div id="end-screen"
+                    style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border: 3px solid #FFD700; border-radius: 15px; padding: 40px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; color: white; min-width: 350px;">
+                    <h2 id="end-title"
+                        style="font-size: 2.5em; margin-bottom: 20px; color: #FFD700; text-align: center;">Runde Vorbei!
+                    </h2>
+                    <div id="results" style="font-size: 1.5em; text-align: center; margin-bottom: 30px;"></div>
+                    <div style="display: flex; gap: 20px;">
+                        <button id="nextRoundBtn"
+                            style="display: none; padding: 10px 20px; background-color: #f39c12; color: white; border: none; font-size: 1.2em; cursor: pointer; border-radius: 5px;">Nächste
+                            Runde</button>
+                        <button id="playAgainBtn"
+                            style="display: none; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; font-size: 1.2em; cursor: pointer; border-radius: 5px;">Noch
+                            ein Spiel?</button>
+                        <button id="backToLobbyBtn"
+                            style="padding: 10px 20px; font-size: 1.2em; cursor: pointer; border-radius: 5px; background-color: #e74c3c; color: white; border: none;">Schließen</button>
+                    </div>
+                </div>
+
+                <div id="player-top" class="player-area top-area"
+                    style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); text-align: center;">
+                </div>
+                <div id="player-left" class="player-area left-area"
+                    style="position: absolute; top: 50%; left: 50px; transform: translate(-50%, -50%) rotate(90deg); text-align: center;">
+                </div>
+                <div id="player-right" class="player-area right-area"
+                    style="position: absolute; top: 50%; right: 50px; transform: translate(50%, -50%) rotate(-90deg); text-align: center;">
+                </div>
+
+                <div id="center-area"
+                    style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 20px; border: 2px solid white; padding: 20px; border-radius: 15px; background: rgba(0, 0, 0, 0.2);">
+                    <div id="pot-display"
+                        style="display: block; color: gold; font-weight: bold; font-size: 1.5em; text-shadow: 2px 2px 5px black; margin-bottom: -10px;">
+                        Kassa: 0 🪙
+                    </div>
+                    <div id="center-cards" style="display: flex; gap: 20px;">
+                        <!-- 3 Cards go here -->
+                        <div class="card playing-card empty"></div>
+                        <div class="card playing-card empty"></div>
+                        <div class="card playing-card empty"></div>
+                    </div>
+                </div>
+
+                <div id="player-bottom" class="player-area bottom-area"
+                    style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
+                    <div id="my-name"
+                        style="color: white; font-weight: bold; font-size: 1.5em; margin-bottom: 15px; text-shadow: 1px 1px 2px black;">
+                    </div>
+                    <div id="my-cards" style="display: flex; gap: 15px; justify-content: center; min-height: 120px;">
+                    </div>
+                    <div id="action-buttons"
+                        style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
+                        <button id="swapAllBtn" class="action-btn"
+                            style="background: #f39c12; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #e67e22; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Alle
+                            Tauschen</button>
+                        <button id="passBtn" class="action-btn"
+                            style="background: #95a5a6; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #7f8c8d; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Schieben
+                            (Passen)</button>
+                        <button id="knockBtn" class="action-btn"
+                            style="background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #c0392b; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Klopfen
+                            (Knock)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="toast-container"></div>
+    <div id="info-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="margin-top: 0;">ℹ️ Info</h2>
+            <h3 style="color: yellow;">Spiel starten: (blaues Feld)</h3>
+            <p>• 1. Gib deinen Namen ein</p>
+            <p>• 2. Gib den Namen deines Gegners ein</p>
+            <p>• 3. Spiel erstellen</p>
+            <p style="color: yellow;">• Mitspieler: (gelbes Feld)</p>
+            <p>• 1. Name eingeben</p>
+            <p>• 2. Beitreten</p>
+            <button id="close-info-btn"
+                style="margin-top: 20px; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2 style="margin-top: 0; color: #f39c12;">⚠️ Achtung</h2>
+            <p id="confirm-text" style="margin-bottom: 25px;">Möchtest du wirklich ALLE deine Karten mit der Mitte
+                tauschen?</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="confirm-yes-btn"
+                    style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;">Ja</button>
+                <button id="confirm-no-btn"
+                    style="padding: 10px 20px; background-color: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;">Nein</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
