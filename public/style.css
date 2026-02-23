@@ -194,8 +194,7 @@ h2 {
 @media (max-width: 600px) {
     #player-left {
         left: 5px !important;
-        top,
-        30% !important;
+        top: 30% !important;
     }
 
     #player-right {
