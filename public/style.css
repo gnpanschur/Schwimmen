@@ -237,7 +237,7 @@ h2 {
     #center-area {
         gap: 10px !important;
         padding: 10px !important;
-        top: 49% !important;
+        top: 40% !important;
     }
 
     #center-cards {
@@ -259,6 +259,10 @@ h2 {
 
     .header h2 {
         font-size: 1.2em !important;
+    }
+
+    #my-name {
+        font-size: 1.4em !important;
     }
 
     .end-modal {
