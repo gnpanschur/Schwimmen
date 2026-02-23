@@ -15,7 +15,7 @@ body {
 
 #app {
     text-align: center;
-    width: 100%;
+    width: calc(125vw - 12.5px);
     max-width: 800px;
 }
 
@@ -193,12 +193,13 @@ h2 {
 /* Responsive / Mobile Portrait */
 @media (max-width: 600px) {
     #player-left {
-        left: 20px !important;
-        top: 30% !important;
+        left: 5px !important;
+        top,
+        30% !important;
     }
 
     #player-right {
-        right: 20px !important;
+        right: 5px !important;
         top: 30% !important;
     }
 
