@@ -15,8 +15,8 @@ body {
 
 #app {
     text-align: center;
-    width: 95%;
-    max-width: 1400px;
+    width: 100%;
+    max-width: 800px;
 }
 
 h1,
@@ -230,5 +230,13 @@ h2 {
 
     .header h2 {
         font-size: 1.2em !important;
+    }
+}
+
+/* Responsive / Landscape Layout */
+@media (orientation: landscape) and (min-width: 601px) {
+    #app {
+        width: 95%;
+        max-width: 1400px;
     }
 }
