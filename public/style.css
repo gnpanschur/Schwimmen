@@ -236,15 +236,15 @@ h2 {
 /* Responsive / Landscape Layout */
 @media (orientation: landscape) and (min-width: 601px) {
     #app {
-        width: 95%;
-        max-width: 1400px;
+        width: calc(125vw - 12.5px);
+        max-width: none;
     }
 
     #player-left {
-        left: 10px !important;
+        left: 5px !important;
     }
 
     #player-right {
-        right: 10px !important;
+        right: 5px !important;
     }
 }
