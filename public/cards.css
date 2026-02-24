@@ -90,7 +90,7 @@
     font-weight: bold;
     margin-bottom: 5px;
     text-shadow: 1px 1px 2px black;
-    font-size: 1.8em;
+    font-size: 1.8rem;
 }
 
 .active-turn {
@@ -147,6 +147,6 @@
 /* Responsive / Mobile Portrait modifications are now handled by redefining :root at the top */
 @media (max-width: 600px) {
     .player-info {
-        font-size: 1.4em !important;
+        font-size: 1.4rem !important;
     }
 }
