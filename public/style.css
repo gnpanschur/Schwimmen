@@ -352,11 +352,17 @@ h2 {
 /* PC-only: center-area und player-bottom um 20% verkleinern */
 @media (min-width: 601px) {
     #center-area {
+        top: 41% !important;
         transform: translate(-50%, -50%) scale(0.8) !important;
     }
 
     #player-bottom {
         transform: translateX(-50%) scale(0.8) !important;
         transform-origin: center bottom !important;
+    }
+
+    #player-top {
+        transform: translateX(-50%) scale(0.9) !important;
+        transform-origin: center top !important;
     }
 }
