@@ -207,33 +207,39 @@ function renderCard(card, isMini = false) {
 
     if (!card) {
         if (isMini) {
-            el.className += ' back';
+            // Rückseite als Bild
+            el.className = 'card playing-card mini-card';
+            const img = document.createElement('img');
+            img.src = 'Doppeldeutsch_6-Ass/back.webp';
+            img.className = 'card-img';
+            img.draggable = false;
+            el.appendChild(img);
         } else {
-            el.className += ' empty';
+            el.classList.add('empty');
         }
         return el;
     }
 
-    el.classList.add(`suit-${card.suit}`);
-
-    let suitSymbol = '';
-    if (card.suit === 'Heart') suitSymbol = '♥';
-    if (card.suit === 'Diamond') suitSymbol = '♦';
-    if (card.suit === 'Club') suitSymbol = '♣';
-    if (card.suit === 'Spade') suitSymbol = '♠';
-
     if (isMini) {
-        // Mini cards just show the back
-        el.className = 'card playing-card mini-card back';
+        // Gegner-Karte: immer Rückseite
+        const img = document.createElement('img');
+        img.src = 'Doppeldeutsch_6-Ass/back.webp';
+        img.className = 'card-img';
+        img.draggable = false;
+        el.appendChild(img);
     } else {
-        el.innerHTML = `
-            <div class="top-left-suit">${card.face}${suitSymbol}</div>
-            <div class="center-suit">${suitSymbol}</div>
-            <div class="bottom-right-suit">${card.face}${suitSymbol}</div>
-        `;
+        // Suitname umwandeln: Heart→HEARTS, Club→CLUBS, etc.
+        const suitMap = { Heart: 'HEARTS', Diamond: 'DIAMONDS', Club: 'CLUBS', Spade: 'SPADES' };
+        const suitName = suitMap[card.suit] || card.suit.toUpperCase() + 'S';
+        const img = document.createElement('img');
+        img.src = `Doppeldeutsch_6-Ass/${suitName}_${card.face}.webp`;
+        img.className = 'card-img';
+        img.draggable = false;
+        el.appendChild(img);
     }
     return el;
 }
+
 
 function renderGameState(state) {
     currentGameState = state;
