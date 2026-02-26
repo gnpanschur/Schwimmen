@@ -1,3 +1,28 @@
+// ------------------------------------------------------------------
+// WAKE LOCK: Verhindert Standby während des Spiels
+// ------------------------------------------------------------------
+let wakeLock = null;
+
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+        } catch (err) {
+            // Gerät unterstützt es nicht oder hat es verweigert – kein Problem
+            console.warn('Wake Lock nicht verfügbar:', err.message);
+        }
+    }
+}
+
+// Wake Lock automatisch neu anfordern, wenn Tab wieder aktiv wird
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        requestWakeLock();
+    }
+});
+
+requestWakeLock();
+
 const socket = io();
 
 function generateUUID() {

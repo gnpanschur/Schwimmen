@@ -97,15 +97,10 @@ class Game {
     startNextRound() {
         if (this.status !== 'finished') return false;
 
-        // Find next round starter
-        let initialStarter = this.roundStarterIndex;
         let activePlayers = this.players.filter(p => !p.isOut);
         if (activePlayers.length <= 1) return false; // Game over actually
 
-        do {
-            this.roundStarterIndex = (this.roundStarterIndex + 1) % this.players.length;
-        } while (this.players[this.roundStarterIndex].isOut && this.roundStarterIndex !== initialStarter);
-
+        // roundStarterIndex was already advanced in finish() — use it directly
         this.status = 'playing';
         this.deck = createDeck();
         this.centerCards = [this.deck.pop(), this.deck.pop(), this.deck.pop()];
@@ -257,10 +252,21 @@ class Game {
             }
         }
 
+        // Advance the dealer BEFORE sorting so the index stays valid
+        let initialStarter = this.roundStarterIndex;
+        do {
+            this.roundStarterIndex = (this.roundStarterIndex + 1) % this.players.length;
+        } while (this.players[this.roundStarterIndex].isOut && this.roundStarterIndex !== initialStarter);
+        const nextDealerPId = this.players[this.roundStarterIndex].pId;
+
         this.players.sort((a, b) => {
             if (a.isOut !== b.isOut) return a.isOut ? 1 : -1;
             return b.score - a.score;
         });
+
+        // Restore the correct roundStarterIndex after sorting
+        this.roundStarterIndex = this.players.findIndex(p => p.pId === nextDealerPId);
+        if (this.roundStarterIndex === -1) this.roundStarterIndex = 0;
     }
 
     getState(requestingPId) {
