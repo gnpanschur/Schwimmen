@@ -92,12 +92,13 @@ Die Karten der Gegner sind verdeckt sichtbar. Das Ziehen und Abwerfen funktionie
 Eine echte "Knock" (Klopfen) Mechanik: Wenn ein Spieler klopft, hat jeder andere Spieler noch genau einen Zug.
 Wie wird gespielt?
 Der Server wurde bereits in einem separaten schwarzen Fenster (Terminal) gestartet!
-
+--------------------------------------------------------------------------------------------
 Du kannst jetzt deinen Browser (z.B. Chrome oder Edge) öffnen und auf diese URL gehen: http://localhost:3002
 
-Schritt 1: Öffne mindestens 2 (bis zu 4) Browser-Tabs mit dieser URL.
-Schritt 2: Erstelle im ersten Tab ein Spiel (z.B. als "Spieler1" gegen "Spieler2").
-Schritt 3: Tritt im zweiten Tab dem Spiel bei (Gebe einfach "Spieler2" im gelben Bereich ein).
-Schritt 4: Sobald alle in der Lobby sind, klickt einer auf START GAME.
-Schritt 5: Wenn du am Zug bist (Ich klopfe! Button ist sichtbar), klicke auf das Deck (verdeckt) oder den offengelegten Ablagestapel (Mitte), wähle dann eine deiner Karten am unteren Rand aus und klicke auf Abwerfen.
-Viel Spaß! Wenn du Regeln anpassen möchtest oder die Optik geändert haben willst, sag einfach Bescheid.
+https://dashboard.render.com/web/srv-d6e3qa94tr6s73d72ob0
+
+
+
+Wer spielt nach "Runde Vorbei!" als nächster aus: die geber wechseln sich der reihe nach ab. erst Player1, dann player2, dann Player3...
+
+das Handy darf während des Spieles nicht auf Standby gehen. Das lässt sich mit der Wake Lock API lösen

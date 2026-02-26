@@ -340,7 +340,7 @@ function renderGameState(state) {
         const opponentPlayers = state.players.filter(p => !p.isOut); // Just an array for sorting
         if (me) {
             let meCoinsText = me.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, me.coins));
-            if (me.isOut) meCoinsText = "☠️";
+            if (me.isOut) meCoinsText = "<span style='font-size:1.6em; line-height:1;'>☠️</span>";
 
             myNameEl.innerHTML = `${me.name} <span style="font-size: 0.8em; margin-left:10px;">${meCoinsText}</span> ${me.hasKnocked ? '<span class="knocked-indicator">geklopft!</span>' : ''}`;
 
@@ -414,7 +414,7 @@ function renderGameState(state) {
 
             const oppArea = document.getElementById(targetId);
             let oppCoinsText = opp.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, opp.coins));
-            if (opp.isOut) oppCoinsText = "☠️";
+            if (opp.isOut) oppCoinsText = "<span style='font-size:1.6em; line-height:1;'>☠️</span>";
 
             oppArea.innerHTML = `<div class="player-info" style="${opp.isOut ? 'opacity: 0.5;' : ''}">${opp.name} <span style="font-size: 0.8em; margin-left:5px;">${oppCoinsText}</span> ${opp.hasKnocked ? '<span class="knocked-indicator">geklopft!</span>' : ''}</div>
                                  <div style="display: flex; gap: 5px; justify-content: center; ${opp.isOut ? 'opacity: 0.5;' : ''}"></div>`;
