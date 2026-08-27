@@ -76,7 +76,7 @@ class LobbyManager {
    * @param {string} playerName 
    * @returns {{ success: boolean, roomCode?: string, state?: Object, message?: string }}
    */
-  joinRoom(socketId, roomCode, playerName, autoReady = false) {
+  joinRoom(socketId, roomCode, playerName, autoReady = true) {
     const code = (roomCode || '').toUpperCase().trim();
     const room = this.rooms.get(code);
 

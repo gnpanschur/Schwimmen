@@ -82,10 +82,10 @@ class SocketClient {
     });
   }
 
-  joinRoom(roomCode, playerName, autoReady = false, callback) {
+  joinRoom(roomCode, playerName, autoReady = true, callback) {
     if (typeof autoReady === 'function') {
       callback = autoReady;
-      autoReady = false;
+      autoReady = true;
     }
     this.currentRoomCode = roomCode;
     this.currentPlayerName = playerName;

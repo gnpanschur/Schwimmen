@@ -30,7 +30,7 @@ class LobbyRoom {
    * @param {string} playerName - Name des Spielers
    * @returns {{ success: boolean, message?: string }}
    */
-  addPlayer(socketId, playerName, autoReady = false) {
+  addPlayer(socketId, playerName, autoReady = true) {
     const cleanName = (playerName || 'Spieler').trim().substring(0, this.config.maxPlayerNameLength);
     if (!cleanName) {
       return { success: false, message: 'Ungültiger Spielername' };
@@ -40,9 +40,7 @@ class LobbyRoom {
     const existingPlayer = this.players.find(p => p.id === socketId);
     if (existingPlayer) {
       existingPlayer.name = cleanName;
-      if (autoReady && !existingPlayer.isHost) {
-        existingPlayer.isReady = true;
-      }
+      existingPlayer.isReady = true;
       return { success: true };
     }
 
@@ -61,7 +59,7 @@ class LobbyRoom {
       id: socketId,
       name: cleanName,
       isHost: isHost,
-      isReady: (isHost || autoReady) ? true : false, // Host oder Link-Beitritt ist automatisch ready
+      isReady: true, // Alle beigetretenen Spieler stehen automatisch auf BEREIT
       joinedAt: Date.now()
     };
 
