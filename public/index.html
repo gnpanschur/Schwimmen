@@ -132,14 +132,13 @@
 
     <!-- ================= SCHWIMMEN GAME SCREEN ================= -->
     <section id="game-screen" class="screen">
-      <div class="header" style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; margin-top: 5px;">
+      <div class="header game-header">
         <h2 style="margin: 0; font-size: 1.2rem;"><span style="color: #eef10a;">CODE = </span> <span id="currentRoom"></span></h2>
         <div style="display: flex; justify-content: center; gap: 10px;">
           <button id="gameInfoBtn" class="btn btn-primary" style="padding: 4px 12px; font-size: 0.85rem;">ℹ️ Info</button>
           <button id="gameFullscreenBtn" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem;">⛶ Vollbild</button>
           <button id="exitBtn" class="btn btn-danger" style="padding: 4px 12px; font-size: 0.85rem;">EXIT</button>
         </div>
-        <div id="status" style="font-size: 0.85em; color: lightgreen;">Verbunden!</div>
       </div>
 
       <div id="game-board" style="position: relative; width: 98%; max-width: 800px; height: calc(100vh - 120px); min-height: 400px; background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; margin-top: 5px;">

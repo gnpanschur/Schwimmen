@@ -120,6 +120,21 @@ input[type="text"] {
   overflow: hidden;
 }
 
+.game-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 98%;
+  max-width: 800px;
+  margin-top: 5px;
+  padding: 8px 16px;
+  background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
 /* Glassmorphic Panel Card */
 .card-glass {
   background: var(--bg-card);
