@@ -403,22 +403,19 @@ input[type="text"]:focus {
 .players-grid {
   list-style: none;
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
   width: 100%;
-  padding-right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .player-card {
-  flex: 1 1 calc(25% - 0.5rem);
-  min-width: 110px;
-  max-width: 220px;
+  width: 100%;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.45rem 0.6rem;
+  padding: 0.5rem 0.85rem;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -559,16 +556,14 @@ input[type="text"]:focus {
 
   .players-grid {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
     gap: 0.35rem;
+    max-height: 320px;
   }
 
   .player-card {
-    flex: 1 1 calc(50% - 0.35rem);
-    min-width: 100px;
-    padding: 0.35rem 0.5rem;
+    width: 100%;
+    padding: 0.4rem 0.6rem;
   }
 
   .lobby-header h2 {
