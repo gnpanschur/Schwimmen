@@ -257,19 +257,12 @@ function renderGameState(state) {
                         });
                     }
 
-                    // CLICK TO PLAY / SWAP
+                    // CLICK TO DRAW FROM CENTER
                     cardEl.addEventListener('click', () => {
-                        if (selectedHandCardIndex !== null && me.hand.length === 3) {
-                            const handIdx = selectedHandCardIndex;
-                            selectedHandCardIndex = null;
-                            socket.emit('drawFromCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), centerIndex: index });
-                            setTimeout(() => {
-                                socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), handIndex: handIdx });
-                            }, 80);
-                        } else if (me.hand.length < 4) {
+                        if (me.hand.length < 4) {
                             socket.emit('drawFromCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), centerIndex: index });
                         } else {
-                            showToast("Bitte wähle eine Karte aus deiner Hand zum Ablegen aus!");
+                            showToast("Du hast bereits 4 Karten! Klicke eine Handkarte zum Ablegen an.");
                         }
                     });
                 }
@@ -316,10 +309,6 @@ function renderGameState(state) {
                     if (me.isCurrentTurn && state.status === 'playing') {
                         cardEl.classList.add('clickable');
 
-                        if (selectedHandCardIndex === index) {
-                            cardEl.classList.add('selected');
-                        }
-
                         if (state.centerCards.length < 4) {
                             cardEl.draggable = true;
                             cardEl.addEventListener('dragstart', (e) => {
@@ -327,17 +316,12 @@ function renderGameState(state) {
                             });
                         }
 
-                        // CLICK TO PLAY / SELECT / DISCARD
+                        // CLICK TO DISCARD HAND CARD TO CENTER (OPTION B: STEP 1)
                         cardEl.addEventListener('click', () => {
-                            if (me.hand.length === 4) {
-                                selectedHandCardIndex = null;
+                            if (state.centerCards.length < 4) {
                                 socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), handIndex: index });
-                            } else if (me.hand.length === 3) {
-                                selectedHandCardIndex = (selectedHandCardIndex === index) ? null : index;
-                                renderGameState(currentGameState);
-                            } else if (state.centerCards.length < 4) {
-                                selectedHandCardIndex = null;
-                                socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), handIndex: index });
+                            } else {
+                                showToast("Die Mitte ist voll (4 Karten)! Klicke eine Mitte-Karte an.");
                             }
                         });
                     }
