@@ -402,18 +402,23 @@ input[type="text"]:focus {
 
 .players-grid {
   list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
   gap: 0.5rem;
-  max-height: 260px;
-  overflow-y: auto;
-  padding-right: 2px;
+  width: 100%;
+  padding-right: 0;
 }
 
 .player-card {
+  flex: 1 1 calc(25% - 0.5rem);
+  min-width: 110px;
+  max-width: 220px;
   background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.45rem 0.75rem;
+  padding: 0.45rem 0.6rem;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -553,13 +558,17 @@ input[type="text"]:focus {
   }
 
   .players-grid {
-    grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 0.35rem;
-    max-height: 320px;
   }
 
   .player-card {
-    padding: 0.4rem 0.5rem;
+    flex: 1 1 calc(50% - 0.35rem);
+    min-width: 100px;
+    padding: 0.35rem 0.5rem;
   }
 
   .lobby-header h2 {
