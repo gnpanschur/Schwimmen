@@ -57,6 +57,7 @@ const myCardsEl = document.getElementById('my-cards');
 const myNameEl = document.getElementById('my-name');
 
 let currentGameState = null;
+let selectedHandCardIndex = null;
 
 function getMyPlayerId() {
     return window.socketClient ? window.socketClient.socketId : socket.id;
@@ -235,28 +236,48 @@ function renderGameState(state) {
             potDisplay.innerHTML = 'Kassa: 0 <span class="coin-emoji">🪙</span>';
         }
 
+        // Reset selection if not active turn
+        const me = state.players.find(p => p.pId === playerId || p.pId === socket.id);
+        if (!me || !me.isCurrentTurn || state.status !== 'playing') {
+            selectedHandCardIndex = null;
+        }
+
         // Render Center Cards
         centerCardsEl.innerHTML = '';
         if (state.centerCards) {
             state.centerCards.forEach((card, index) => {
                 const cardEl = renderCard(card);
-                const me = state.players.find(p => p.pId === playerId || p.pId === socket.id);
                 if (me && me.isCurrentTurn && state.status === 'playing') {
+                    cardEl.classList.add('clickable');
+
                     if (me.hand.length < 4) {
                         cardEl.draggable = true;
-                        cardEl.style.cursor = 'grab';
-
                         cardEl.addEventListener('dragstart', (e) => {
                             e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'center', index }));
                         });
                     }
+
+                    // CLICK TO PLAY / SWAP
+                    cardEl.addEventListener('click', () => {
+                        if (selectedHandCardIndex !== null && me.hand.length === 3) {
+                            const handIdx = selectedHandCardIndex;
+                            selectedHandCardIndex = null;
+                            socket.emit('drawFromCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), centerIndex: index });
+                            setTimeout(() => {
+                                socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), handIndex: handIdx });
+                            }, 80);
+                        } else if (me.hand.length < 4) {
+                            socket.emit('drawFromCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), centerIndex: index });
+                        } else {
+                            showToast("Bitte wähle eine Karte aus deiner Hand zum Ablegen aus!");
+                        }
+                    });
                 }
                 centerCardsEl.appendChild(cardEl);
             });
         }
 
         // Render Players
-        const me = state.players.find(p => p.pId === playerId || p.pId === socket.id);
         const opponents = state.players.filter(p => p.pId !== playerId && p.pId !== socket.id);
 
         if (me) {
@@ -293,14 +314,32 @@ function renderGameState(state) {
                 me.hand.forEach((card, index) => {
                     const cardEl = renderCard(card);
                     if (me.isCurrentTurn && state.status === 'playing') {
+                        cardEl.classList.add('clickable');
+
+                        if (selectedHandCardIndex === index) {
+                            cardEl.classList.add('selected');
+                        }
+
                         if (state.centerCards.length < 4) {
                             cardEl.draggable = true;
-                            cardEl.style.cursor = 'grab';
-
                             cardEl.addEventListener('dragstart', (e) => {
                                 e.dataTransfer.setData('text/plain', JSON.stringify({ source: 'hand', index }));
                             });
                         }
+
+                        // CLICK TO PLAY / SELECT / DISCARD
+                        cardEl.addEventListener('click', () => {
+                            if (me.hand.length === 4) {
+                                selectedHandCardIndex = null;
+                                socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), handIndex: index });
+                            } else if (me.hand.length === 3) {
+                                selectedHandCardIndex = (selectedHandCardIndex === index) ? null : index;
+                                renderGameState(currentGameState);
+                            } else if (state.centerCards.length < 4) {
+                                selectedHandCardIndex = null;
+                                socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId: getMyPlayerId(), handIndex: index });
+                            }
+                        });
                     }
                     myCardsEl.appendChild(cardEl);
                 });
