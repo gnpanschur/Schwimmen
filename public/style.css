@@ -122,9 +122,10 @@ input[type="text"] {
 
 .game-header {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 98%;
   max-width: 800px;
   margin-top: 5px;
