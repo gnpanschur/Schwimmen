@@ -1,226 +1,233 @@
 <!DOCTYPE html>
 <html lang="de">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Schwimmen</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="cards.css">
-    <style>
-        #toast-container {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Schwimmen - Multiplayer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="cards.css">
+  <style>
+    #toast-container {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
 
-        .toast {
-            background-color: #e74c3c;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            font-size: 1.1em;
-            font-weight: bold;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            text-align: center;
-        }
+    .toast {
+      background-color: #e74c3c;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      font-size: 1.1em;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+      text-align: center;
+    }
 
-        .toast.show {
-            opacity: 1;
-        }
+    .toast.show {
+      opacity: 1;
+    }
 
-        /* Custom disabled look without swallowed clicks */
-        .btn-invalid {
-            opacity: 0.5;
-            cursor: not-allowed !important;
-        }
-    </style>
+    .btn-invalid {
+      opacity: 0.5;
+      cursor: not-allowed !important;
+    }
+  </style>
 </head>
-
 <body>
-    <div id="app">
-        <h1>Schwimmen</h1>
 
-        <div id="lobby">
-            <!-- Part A: Creator (Blue) -->
-            <div class="lobby-section create-section">
-                <h2>Ich erstelle ein Spiel: Geber</h2>
-                <div class="input-group">
-                    <label>1. Geber: gib deinen Namen ein</label>
-                    <input type="text" id="creatorName" placeholder="Dein Vorname" maxlength="12">
-                </div>
-                <div class="input-group">
-                    <label>2. Geber, gib die ersten drei Buchstaben deines Namens ein.</label>
-                    <input type="text" id="opponentNameInput" placeholder="3 Buchstaben = Passwort" maxlength="12">
-                </div>
-                <button id="createBtn">SPIEL ERSTELLEN</button>
-            </div>
+  <!-- Background Animated Glow -->
+  <div class="bg-glow"></div>
 
-            <!-- Part B: Joiner (Yellow) -->
-            <div class="lobby-section join-section">
-                <h2>Ich spiele mit:</h2>
-                <div class="input-group">
-                    <label>1. Mitspieler: gib deinen Namen ein</label>
-                    <input type="text" id="joinerName" placeholder="Dein Vorname" maxlength="12">
-                </div>
-                <div class="input-group">
-                    <label>2. Passwort = die ersten 3 Buchstaben des Gebers (z.B. ALFRED = ALF)</label>
-                    <input type="text" id="joinerPassword" placeholder="Passwort" maxlength="12">
-                </div>
-                <!-- Note: Password/Room Code is implicitly the joiner's name -->
-                <button id="joinBtn">BEITRETEN</button>
-            </div>
+  <div id="app" class="app-container">
 
-            <div class="lobby-controls">
-                <button id="infoBtn" class="icon-btn">ℹ️ Info</button>
-                <button id="fullscreenBtnLobby" class="icon-btn">⛶ Fullscreen</button>
-            </div>
+    <!-- ================= LOGIN / RAUM-ERSTELLEN SCREEN ================= -->
+    <section id="login-screen" class="screen active">
+      <div class="card-glass login-box">
+        <div class="logo-title">
+          <span class="letter">S</span>
+          <span class="letter">C</span>
+          <span class="letter">H</span>
+          <span class="letter">W</span>
+          <span class="letter">I</span>
+          <span class="letter">M</span>
+          <span class="letter">M</span>
+          <span class="letter">E</span>
+          <span class="letter">N</span>
+        </div>
+        <p class="subtitle">Multiplayer Kartenspiel 31</p>
+
+        <div class="form-group">
+          <label for="player-name-input">Dein Spielername</label>
+          <input type="text" id="player-name-input" placeholder="z. B. Alex" maxlength="12" autocomplete="off">
         </div>
 
-        <div id="game" style="display: none;">
-            <div class="header"
-                style="display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; margin-top: -15px;">
-                <h2 style="margin: 0;"><span style="color: #eef10a;">CODE = </span> <span id="currentRoom"></span>
-                </h2>
-                <div style="display: flex; justify-content: center; gap: 15px;">
-                    <button id="gameInfoBtn" class="icon-btn"
-                        style="background-color: #3498db; color: white; padding: 5px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: bold;">ℹ️
-                        Info</button>
-                    <button id="gameFullscreenBtn" class="icon-btn"
-                        style="background-color: #9b59b6; color: white; padding: 5px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; font-weight: bold;">⛶
-                        Vollbild</button>
-                    <button id="exitBtn" class="exit-btn" style="margin-left: 0;">EXIT</button>
-                </div>
-                <div id="status" style="font-size: 0.8em; margin-bottom: 5px; text-align: center;">Connecting...</div>
-            </div>
+        <div class="action-buttons">
+          <button id="btn-create-room" class="btn btn-primary btn-glow">
+            <span class="icon">✨</span> Raum Erstellen
+          </button>
 
-            <div id="pre-game-lobby" style="margin-top: 20px; padding: 20px; text-align: center;">
-                <h3 style="color: white;">Spieler im Raum:</h3>
-                <ul id="player-list" style="list-style: none; padding: 0; color: white; font-size: 1.2em;"></ul>
-                <button id="startGameBtn"
-                    style="margin-top: 20px; padding: 15px 30px; font-size: 1.2em; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">START
-                    GAME</button>
-            </div>
+          <div class="divider"><span>ODER</span></div>
 
-            <div id="game-board"
-                style="display: none; position: relative; width: 100%; height: calc(100vh - 160px); min-height: 400px; background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden;">
-                <!-- End Screen Modal embedded -->
-                <div id="end-screen" class="end-modal"
-                    style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border: 3px solid #FFD700; border-radius: 15px; padding: 40px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; color: white; min-width: 350px;">
-                    <h2 id="end-title"
-                        style="font-size: 2.5em; margin-bottom: 20px; color: #FFD700; text-align: center;">Runde Vorbei!
-                    </h2>
-                    <div id="results" style="font-size: 1.5em; text-align: center; margin-bottom: 30px;"></div>
-                    <div style="display: flex; gap: 20px;">
-                        <button id="nextRoundBtn"
-                            style="display: none; padding: 10px 20px; background-color: #f39c12; color: white; border: none; font-size: 1.2em; cursor: pointer; border-radius: 5px;">Nächste
-                            Runde</button>
-                        <button id="playAgainBtn"
-                            style="display: none; padding: 10px 20px; background-color: #4CAF50; color: white; border: none; font-size: 1.2em; cursor: pointer; border-radius: 5px;">Noch
-                            ein Spiel?</button>
-                        <button id="backToLobbyBtn"
-                            style="padding: 10px 20px; font-size: 1.2em; cursor: pointer; border-radius: 5px; background-color: #e74c3c; color: white; border: none;">Schließen</button>
-                    </div>
-                </div>
-
-                <div id="player-top" class="player-area top-area"
-                    style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); text-align: center;">
-                </div>
-                <div id="player-left" class="player-area left-area"
-                    style="position: absolute; top: 50%; left: 50px; transform: translate(-50%, -50%) rotate(90deg); text-align: center;">
-                </div>
-                <div id="player-right" class="player-area right-area"
-                    style="position: absolute; top: 50%; right: 50px; transform: translate(50%, -50%) rotate(-90deg); text-align: center;">
-                </div>
-
-                <div id="center-area"
-                    style="position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 20px; border: 2px solid white; padding: 20px; border-radius: 15px; background: rgba(0, 0, 0, 0.2);">
-                    <div id="turn-indicator"
-                        style="display: none; color: white; background-color: rgba(92, 151, 155, 0.8); padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2em; text-shadow: 1px 1px 2px black; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-top: -10px; margin-bottom: -15px;">
-                        Warten auf Spieler...
-                    </div>
-                    <div id="pot-display"
-                        style="display: block; color: gold; font-weight: bold; font-size: 1.5em; text-shadow: 2px 2px 5px black; margin-bottom: -10px;">
-                        Kassa: 0 <span class="coin-emoji">🪙</span>
-                    </div>
-                    <div id="center-cards" style="display: flex; gap: 20px;">
-                        <!-- 3 Cards go here -->
-                        <div class="card playing-card empty"></div>
-                        <div class="card playing-card empty"></div>
-                        <div class="card playing-card empty"></div>
-                    </div>
-                </div>
-
-                <div id="player-bottom" class="player-area bottom-area"
-                    style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
-                    <div id="my-name"
-                        style="color: white; font-weight: bold; font-size: 2.0em; margin-bottom: 15px; text-shadow: 1px 1px 2px black;">
-                    </div>
-                    <div id="my-cards" style="display: flex; gap: 15px; justify-content: center; min-height: 120px;">
-                    </div>
-                    <div id="action-buttons"
-                        style="margin-top: 15px; display: none; gap: 10px; justify-content: center;">
-                        <button id="swapAllBtn" class="action-btn"
-                            style="background: #f39c12; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #e67e22; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Alle
-                            Tauschen</button>
-                        <button id="passBtn" class="action-btn"
-                            style="background: #6c757d; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #5c636a; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Weiter
-                            (Passen)</button>
-                        <button id="knockBtn" class="action-btn"
-                            style="background: #e74c3c; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold; border: 2px solid #c0392b; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Stop
-                            (Klopfen)</button>
-                    </div>
-                </div>
-            </div>
+          <div class="join-group">
+            <input type="text" id="room-code-input" placeholder="CODE" maxlength="4" style="text-transform: uppercase;">
+            <button id="btn-join-room" class="btn btn-success">Beitreten</button>
+          </div>
         </div>
+
+        <div id="login-error" class="error-message"></div>
+      </div>
+    </section>
+
+    <!-- ================= LOBBY SCREEN ================= -->
+    <section id="lobby-screen" class="screen">
+      <div class="card-glass lobby-box">
+        <header class="lobby-header">
+          <h2>SCHWIMMEN LOBBY</h2>
+          <div style="display: flex; align-items: center; gap: 0.4rem;">
+            <button id="btn-share-whatsapp" class="btn-icon btn-whatsapp" title="Raumcode per WhatsApp teilen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+              </svg>
+            </button>
+            <div class="room-code-badge" id="lobby-room-code-display" title="Klicken zum Kopieren">
+              <span>RAUMCODE:</span>
+              <strong id="display-room-code">----</strong>
+              <button id="btn-copy-code" class="btn-icon" title="Code kopieren">📋</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="players-section">
+          <h3>Spieler im Raum (<span id="player-count">0</span>/4)</h3>
+          <ul id="players-list" class="players-grid">
+            <!-- Dynamische Player-Karten -->
+          </ul>
+        </div>
+
+        <div class="lobby-footer">
+          <button id="btn-toggle-ready" class="btn btn-secondary">
+            Ready schalten
+          </button>
+          <button id="btn-start-game" class="btn btn-success btn-glow" style="display: none;">
+            Spiel Starten 🚀
+          </button>
+          <button id="btn-leave-lobby" class="btn btn-danger">
+            Verlassen
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SCHWIMMEN GAME SCREEN ================= -->
+    <section id="game-screen" class="screen">
+      <div class="header" style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; margin-top: 5px;">
+        <h2 style="margin: 0; font-size: 1.2rem;"><span style="color: #eef10a;">CODE = </span> <span id="currentRoom"></span></h2>
+        <div style="display: flex; justify-content: center; gap: 10px;">
+          <button id="gameInfoBtn" class="btn btn-primary" style="padding: 4px 12px; font-size: 0.85rem;">ℹ️ Info</button>
+          <button id="gameFullscreenBtn" class="btn btn-secondary" style="padding: 4px 12px; font-size: 0.85rem;">⛶ Vollbild</button>
+          <button id="exitBtn" class="btn btn-danger" style="padding: 4px 12px; font-size: 0.85rem;">EXIT</button>
+        </div>
+        <div id="status" style="font-size: 0.85em; color: lightgreen;">Verbunden!</div>
+      </div>
+
+      <div id="game-board" style="position: relative; width: 98%; max-width: 800px; height: calc(100vh - 120px); min-height: 400px; background: radial-gradient(circle, #2f8e40 0%, #1a5225 100%); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; margin-top: 5px;">
+        
+        <!-- End Screen Modal embedded -->
+        <div id="end-screen" class="end-modal" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #222; border: 3px solid #FFD700; border-radius: 15px; padding: 30px; box-shadow: 0 15px 50px rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; color: white; min-width: 280px;">
+          <h2 id="end-title" style="font-size: 2em; margin-bottom: 15px; color: #FFD700; text-align: center;">Runde Vorbei!</h2>
+          <div id="results" style="font-size: 1.3em; text-align: center; margin-bottom: 20px;"></div>
+          <div style="display: flex; gap: 15px;">
+            <button id="nextRoundBtn" class="btn btn-primary" style="display: none; background-color: #f39c12;">Nächste Runde</button>
+            <button id="playAgainBtn" class="btn btn-success" style="display: none;">Noch ein Spiel?</button>
+            <button id="backToLobbyBtn" class="btn btn-danger">Schließen</button>
+          </div>
+        </div>
+
+        <div id="player-top" class="player-area top-area" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); text-align: center;"></div>
+        <div id="player-left" class="player-area left-area" style="position: absolute; top: 50%; left: 40px; transform: translate(-50%, -50%) rotate(90deg); text-align: center;"></div>
+        <div id="player-right" class="player-area right-area" style="position: absolute; top: 50%; right: 40px; transform: translate(50%, -50%) rotate(-90deg); text-align: center;"></div>
+
+        <div id="center-area" style="position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 15px; border: 2px solid rgba(255,255,255,0.4); padding: 15px; border-radius: 15px; background: rgba(0, 0, 0, 0.3);">
+          <div id="turn-indicator" style="display: none; color: white; background-color: rgba(92, 151, 155, 0.9); padding: 4px 14px; border-radius: 20px; font-weight: bold; font-size: 1.1em; text-shadow: 1px 1px 2px black; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-top: -5px; margin-bottom: -10px;">
+            Warten auf Spieler...
+          </div>
+          <div id="pot-display" style="display: block; color: gold; font-weight: bold; font-size: 1.4em; text-shadow: 2px 2px 5px black; margin-bottom: -5px;">
+            Kassa: 0 <span class="coin-emoji">🪙</span>
+          </div>
+          <div id="center-cards" style="display: flex; gap: 15px;">
+            <div class="card playing-card empty"></div>
+            <div class="card playing-card empty"></div>
+            <div class="card playing-card empty"></div>
+          </div>
+        </div>
+
+        <div id="player-bottom" class="player-area bottom-area" style="position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); text-align: center;">
+          <div id="my-name" style="color: white; font-weight: bold; font-size: 1.6em; margin-bottom: 10px; text-shadow: 1px 1px 2px black;"></div>
+          <div id="my-cards" style="display: flex; gap: 12px; justify-content: center; min-height: 110px;"></div>
+          <div id="action-buttons" style="margin-top: 10px; display: none; gap: 8px; justify-content: center;">
+            <button id="swapAllBtn" class="action-btn btn btn-primary" style="background: #f39c12; color: white; border: 2px solid #e67e22;">Alle Tauschen</button>
+            <button id="passBtn" class="action-btn btn btn-secondary" style="background: #6c757d; color: white; border: 2px solid #5c636a;">Weiter (Passen)</button>
+            <button id="knockBtn" class="action-btn btn btn-danger" style="background: #e74c3c; color: white; border: 2px solid #c0392b;">Stop (Klopfen)</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rotate Device Overlay for Mobile Landscape -->
+    <div id="rotate-overlay" class="rotate-overlay">
+      <div class="card-glass rotate-box">
+        <div class="rotate-icon">📱↻</div>
+        <h3>Bitte Hochformat nutzen</h3>
+        <p>Dieses Spiel ist für das <strong>Portrait-Layout</strong> (Hochformat) optimiert. Bitte drehe dein Gerät vertikal.</p>
+      </div>
     </div>
 
-    <!-- Info Modal -->
-    <div id="toast-container"></div>
-    <div id="info-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
-            <h2 style="margin-top: 0;">ℹ️ Info</h2>
-            <h3 style="color: rgb(118, 183, 236);">(Geber) Spiel starten: (blaues Feld)</h3>
-            <p>• 1. Gib deinen Vornamen ein</p>
-            <p>• 2. Gib die ersten 3 Buchstaben deines Vornamens ein (z.B. "Alfred" -> "Alf")</p>
-            <p style="color: rgb(118, 183, 236);">• 3. Spiel erstellen</p>
-            <p style="color: yellow;">• Mitspieler: (gelbes Feld)</p>
-            <p>• 1. Vornamen eingeben</p>
-            <p>• 2. Gib die ersten 3 Buchstaben des Gebers ein (z.B. "Alfred" -> "Alf")</p>
-            <p style="color: yellow;">• 3. Beitreten</p>
-            <p>• 4. Wenn alle Mitspieler im Raum sind, drückt der Geber auf <span
-                    style="color: #5dd861; font-weight: bold;">START GAME</span></p>
-            <button id="close-info-btn"
-                style="margin-top: 20px; padding: 10px 20px; background-color: #2f8131; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Schließen</button>
-        </div>
-    </div>
+  </div>
 
-    <!-- Confirm Modal -->
-    <div id="confirm-modal" class="modal hidden">
-        <div class="modal-content" style="max-width: 400px;">
-            <h2 style="margin-top: 0; color: #f39c12;">⚠️ Achtung</h2>
-            <p id="confirm-text" style="margin-bottom: 25px;">Möchtest du wirklich ALLE deine Karten mit der Mitte
-                tauschen?</p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button id="confirm-yes-btn"
-                    style="padding: 10px 20px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;">Ja</button>
-                <button id="confirm-no-btn"
-                    style="padding: 10px 20px; background-color: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;">Nein</button>
-            </div>
-        </div>
+  <!-- Info Modal -->
+  <div id="toast-container"></div>
+  <div id="info-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 550px; max-height: 80vh; overflow-y: auto;">
+      <h2 style="margin-top: 0; color: var(--accent-blue);">ℹ️ Schwimmen Spielregeln</h2>
+      <p style="text-align: left; font-size: 0.95em;">
+        • <strong>Ziel:</strong> Sammle 31 Punkte derselben Farbe (Karo, Herz, Pik, Kreuz) oder ein Set aus drei gleichen Kartenwerten (z.B. 3 Buben = 30.5 Pkt).<br><br>
+        • <strong>Ablauf:</strong> Wenn du am Zug bist, ziehe eine Karte aus der Mitte und lege eine von deiner Hand ab. Oder tausche alle 3 Karten, wenn sie 3 verschiedene Farben haben.<br><br>
+        • <strong>Stop / Klopfen:</strong> Wenn du denkst, dass du die höchste Punktzahl hast, klicke auf Stop. Die anderen Spieler sind noch genau einmal am Zug.
+      </p>
+      <button id="close-info-btn" class="btn btn-success" style="margin-top: 15px;">Schließen</button>
     </div>
+  </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
+  <!-- Confirm Modal -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 400px;">
+      <h2 style="margin-top: 0; color: #f39c12;">⚠️ Achtung</h2>
+      <p id="confirm-text" style="margin-bottom: 20px;">Möchtest du wirklich ALLE deine Karten mit der Mitte tauschen?</p>
+      <div style="display: flex; gap: 15px; justify-content: center;">
+        <button id="confirm-yes-btn" class="btn btn-success">Ja</button>
+        <button id="confirm-no-btn" class="btn btn-danger">Nein</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/lobbyEvents.js"></script>
+  <script src="js/lobbyConfig.js"></script>
+  <script src="js/socketClient.js"></script>
+  <script src="js/lobbyApp.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>

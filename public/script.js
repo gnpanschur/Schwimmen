@@ -8,13 +8,11 @@ async function requestWakeLock() {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
         } catch (err) {
-            // Gerät unterstützt es nicht oder hat es verweigert – kein Problem
             console.warn('Wake Lock nicht verfügbar:', err.message);
         }
     }
 }
 
-// Wake Lock automatisch neu anfordern, wenn Tab wieder aktiv wird
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         requestWakeLock();
@@ -23,35 +21,15 @@ document.addEventListener('visibilitychange', () => {
 
 requestWakeLock();
 
-const socket = io();
-
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-
-let playerId = sessionStorage.getItem('lobby_playerId');
-if (!playerId) {
-    playerId = generateUUID();
-    sessionStorage.setItem('lobby_playerId', playerId);
-}
+const socket = window.socketClient ? window.socketClient.socket : io();
 
 const statusDiv = document.getElementById('status');
-const lobbyDiv = document.getElementById('lobby');
-const gameDiv = document.getElementById('game');
 const currentRoomSpan = document.getElementById('currentRoom');
 
-const creatorNameInput = document.getElementById('creatorName');
-const opponentNameInput = document.getElementById('opponentNameInput');
-const joinerNameInput = document.getElementById('joinerName');
-
-// Lobby Buttons
-const createBtn = document.getElementById('createBtn');
-const joinBtn = document.getElementById('joinBtn');
+// Buttons & Modals
 const exitBtn = document.getElementById('exitBtn');
-const infoBtn = document.getElementById('infoBtn');
+const gameInfoBtn = document.getElementById('gameInfoBtn');
+const gameFullscreenBtn = document.getElementById('gameFullscreenBtn');
 const infoModal = document.getElementById('info-modal');
 const closeInfoBtn = document.getElementById('close-info-btn');
 
@@ -61,10 +39,6 @@ const confirmYesBtn = document.getElementById('confirm-yes-btn');
 const confirmNoBtn = document.getElementById('confirm-no-btn');
 
 // Game Board Elements
-const preGameLobby = document.getElementById('pre-game-lobby');
-const playerListUl = document.getElementById('player-list');
-const startGameBtn = document.getElementById('startGameBtn');
-
 const gameBoard = document.getElementById('game-board');
 const endScreen = document.getElementById('end-screen');
 const resultsDiv = document.getElementById('results');
@@ -72,113 +46,66 @@ const backToLobbyBtn = document.getElementById('backToLobbyBtn');
 const nextRoundBtn = document.getElementById('nextRoundBtn');
 const playAgainBtn = document.getElementById('playAgainBtn');
 const potDisplay = document.getElementById('pot-display');
-const potAmount = document.getElementById('pot-amount');
 
 const centerCardsEl = document.getElementById('center-cards');
 const actionButtonsDiv = document.getElementById('action-buttons');
-const swapOneBtn = document.getElementById('swapOneBtn');
 const swapAllBtn = document.getElementById('swapAllBtn');
 const passBtn = document.getElementById('passBtn');
+const knockBtn = document.getElementById('knockBtn');
 
 const myCardsEl = document.getElementById('my-cards');
 const myNameEl = document.getElementById('my-name');
-const knockBtn = document.getElementById('knockBtn');
-const centerAreaEl = document.getElementById('center-area');
 
-let currentRoomId = null;
 let currentGameState = null;
+
+function getMyPlayerId() {
+    return window.socketClient ? window.socketClient.socketId : socket.id;
+}
+
+function getMyRoomCode() {
+    return window.socketClient ? window.socketClient.currentRoomCode : (currentRoomSpan ? currentRoomSpan.textContent : null);
+}
 
 function showToast(message) {
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
         container.id = 'toast-container';
-        container.style.position = 'fixed';
-        container.style.top = '50%';
-        container.style.left = '50%';
-        container.style.transform = 'translate(-50%, -50%)';
-        container.style.zIndex = '9999';
-        container.style.display = 'flex';
-        container.style.flexDirection = 'column';
-        container.style.gap = '10px';
-        container.style.pointerEvents = 'none';
         document.body.appendChild(container);
     }
 
     const toast = document.createElement('div');
-    toast.style.backgroundColor = '#e74c3c';
-    toast.style.color = 'white';
-    toast.style.padding = '15px 25px';
-    toast.style.borderRadius = '8px';
-    toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
-    toast.style.fontSize = '1.2em';
-    toast.style.fontWeight = 'bold';
-    toast.style.opacity = '0';
-    toast.style.transition = 'opacity 0.3s ease-in-out';
-    toast.style.textAlign = 'center';
-    toast.style.fontFamily = 'sans-serif';
-
+    toast.className = 'toast';
     toast.textContent = message;
     container.appendChild(toast);
 
-    // Animate in
-    setTimeout(() => toast.style.opacity = '1', 20);
+    setTimeout(() => toast.classList.add('show'), 20);
 
-    // Remove after 3 seconds
     setTimeout(() => {
-        toast.style.opacity = '0';
+        toast.classList.remove('show');
         setTimeout(() => {
             if (toast.parentElement) toast.remove();
         }, 300);
     }, 3000);
 }
 
-function showGame(roomId) {
-    lobbyDiv.style.display = 'none';
-    gameDiv.style.display = 'block';
-    currentRoomSpan.textContent = roomId;
-    currentRoomId = roomId;
-}
-
-// Logic: Room Creation
-createBtn.addEventListener('click', () => {
-    const name = creatorNameInput.value.trim();
-    const opponentName = opponentNameInput.value.trim();
-
-    if (!name) return alert('Bitte deinen Namen eingeben!');
-    if (!opponentName) return alert('Bitte Namen des Gegners eingeben!');
-
-    const customRoomId = opponentName.toLowerCase();
-    sessionStorage.setItem('lobby_username', name);
-
-    socket.emit('createRoom', { name, playerId, customRoomId });
-});
-
-// Logic: Joining
-joinBtn.addEventListener('click', () => {
-    const name = joinerNameInput.value.trim();
-    const password = document.getElementById('joinerPassword').value.trim();
-
-    if (!name) return alert('Bitte deinen Namen eingeben!');
-    if (!password) return alert('Bitte Passwort eingeben!');
-
-    const roomIdToJoin = password.toLowerCase();
-    sessionStorage.setItem('lobby_username', name);
-
-    socket.emit('joinRoom', { roomId: roomIdToJoin, playerName: name, playerId });
-});
+window.startSchwimmenGameUI = function (roomState) {
+    if (window.showScreen) {
+        window.showScreen('game');
+    }
+    const roomCode = roomState ? roomState.code : getMyRoomCode();
+    if (currentRoomSpan) currentRoomSpan.textContent = roomCode;
+    socket.emit('requestState', { roomId: roomCode, playerId: getMyPlayerId() });
+};
 
 // Modals and UI
-infoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
-const gameInfoBtn = document.getElementById('gameInfoBtn');
 if (gameInfoBtn) {
     gameInfoBtn.addEventListener('click', () => infoModal.classList.remove('hidden'));
 }
-closeInfoBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+if (closeInfoBtn) {
+    closeInfoBtn.addEventListener('click', () => infoModal.classList.add('hidden'));
+}
 
-document.getElementById('fullscreenBtnLobby').addEventListener('click', toggleFullscreen);
-
-const gameFullscreenBtn = document.getElementById('gameFullscreenBtn');
 if (gameFullscreenBtn) {
     gameFullscreenBtn.addEventListener('click', toggleFullscreen);
 }
@@ -186,19 +113,24 @@ if (gameFullscreenBtn) {
 function toggleFullscreen() {
     if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch((err) => {
-            alert(`Error attempting to enable fullscreen: ${err.message}`);
+            alert(`Fullscreen Fehler: ${err.message}`);
         });
     } else {
         document.exitFullscreen();
     }
 }
 
-exitBtn.addEventListener('click', () => {
-    location.reload();
-});
+if (exitBtn) {
+    exitBtn.addEventListener('click', () => {
+        if (window.socketClient) {
+            window.socketClient.leaveRoom();
+        }
+        location.reload();
+    });
+}
 
 // ------------------------------------------------------------------
-// GAME LOGIC BOARD
+// GAME CARD RENDERING
 // ------------------------------------------------------------------
 
 function renderCard(card, isMini = false) {
@@ -207,7 +139,6 @@ function renderCard(card, isMini = false) {
 
     if (!card) {
         if (isMini) {
-            // Rückseite als Bild
             el.className = 'card playing-card mini-card';
             const img = document.createElement('img');
             img.src = 'Doppeldeutsch_6-Ass/back.webp';
@@ -221,14 +152,12 @@ function renderCard(card, isMini = false) {
     }
 
     if (isMini) {
-        // Gegner-Karte: immer Rückseite
         const img = document.createElement('img');
         img.src = 'Doppeldeutsch_6-Ass/back.webp';
         img.className = 'card-img';
         img.draggable = false;
         el.appendChild(img);
     } else {
-        // Suitname umwandeln: Heart→HEARTS, Club→CLUBS, etc.
         const suitMap = { Heart: 'HEARTS', Diamond: 'DIAMONDS', Club: 'CLUBS', Spade: 'SPADES' };
         const suitName = suitMap[card.suit] || card.suit.toUpperCase() + 'S';
         const img = document.createElement('img');
@@ -240,26 +169,14 @@ function renderCard(card, isMini = false) {
     return el;
 }
 
-
 function renderGameState(state) {
     currentGameState = state;
-
-    if (state.status === 'waiting') {
-        preGameLobby.style.display = 'block';
-        gameBoard.style.display = 'none';
-
-        playerListUl.innerHTML = '';
-        state.players.forEach(p => {
-            const li = document.createElement('li');
-            li.textContent = p.name;
-            playerListUl.appendChild(li);
-        });
-        return;
-    }
+    const playerId = getMyPlayerId();
 
     if (state.status === 'playing' || state.status === 'finished' || state.status === 'game_over') {
-        preGameLobby.style.display = 'none';
-        gameBoard.style.display = 'block';
+        if (window.showScreen) {
+            window.showScreen('game');
+        }
 
         if (state.status === 'finished' || state.status === 'game_over') {
             endScreen.style.display = 'flex';
@@ -279,7 +196,7 @@ function renderGameState(state) {
                 backToLobbyBtn.style.display = 'inline-block';
             } else {
                 if (state.endedByThirtyOne) {
-                    document.getElementById('end-title').innerHTML = `Runde Vorbei!<br><span style="font-size: 0.8em; color: #ff9800; display: block; margin-top: 10px;">Hose</span>`;
+                    document.getElementById('end-title').innerHTML = `Runde Vorbei!<br><span style="font-size: 0.8em; color: #ff9800; display: block; margin-top: 10px;">Hose (31 Punkte)</span>`;
                 } else {
                     document.getElementById('end-title').innerHTML = "Runde Vorbei!";
                 }
@@ -323,9 +240,8 @@ function renderGameState(state) {
         if (state.centerCards) {
             state.centerCards.forEach((card, index) => {
                 const cardEl = renderCard(card);
-                const me = state.players.find(p => p.pId === playerId);
+                const me = state.players.find(p => p.pId === playerId || p.pId === socket.id);
                 if (me && me.isCurrentTurn && state.status === 'playing') {
-                    // Phase 1 or Discarded First: Center Cards are draggable if Hand has space
                     if (me.hand.length < 4) {
                         cardEl.draggable = true;
                         cardEl.style.cursor = 'grab';
@@ -340,10 +256,9 @@ function renderGameState(state) {
         }
 
         // Render Players
-        const me = state.players.find(p => p.pId === playerId);
-        const opponents = state.players.filter(p => p.pId !== playerId);
+        const me = state.players.find(p => p.pId === playerId || p.pId === socket.id);
+        const opponents = state.players.filter(p => p.pId !== playerId && p.pId !== socket.id);
 
-        const opponentPlayers = state.players.filter(p => !p.isOut); // Just an array for sorting
         if (me) {
             let meCoinsText = me.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, me.coins));
             if (me.isOut) meCoinsText = "<span style='font-size:1.6em; line-height:1;'>☠️</span>";
@@ -355,8 +270,6 @@ function renderGameState(state) {
                 playerBottom.classList.add('active-turn');
                 actionButtonsDiv.style.display = 'flex';
 
-                // Disable normal actions if mid-turn (length not 3)
-                // SwapAll also requires exactly 3 different suits
                 const isMidTurn = me.hand.length !== 3;
                 if (isMidTurn || !me.canSwapAll) swapAllBtn.classList.add('btn-invalid');
                 else swapAllBtn.classList.remove('btn-invalid');
@@ -367,7 +280,6 @@ function renderGameState(state) {
                 if (isMidTurn) knockBtn.classList.add('btn-invalid');
                 else knockBtn.classList.remove('btn-invalid');
 
-                // Force clear native disabled attribute in case of aggressive browser caching
                 swapAllBtn.disabled = false;
                 passBtn.disabled = false;
                 knockBtn.disabled = false;
@@ -381,7 +293,6 @@ function renderGameState(state) {
                 me.hand.forEach((card, index) => {
                     const cardEl = renderCard(card);
                     if (me.isCurrentTurn && state.status === 'playing') {
-                        // Phase 2 or Drawing Next: Hand cards are draggable if Center has space
                         if (state.centerCards.length < 4) {
                             cardEl.draggable = true;
                             cardEl.style.cursor = 'grab';
@@ -405,20 +316,24 @@ function renderGameState(state) {
         const positions = ['top-area', 'left-area', 'right-area'];
         ['player-top', 'player-left', 'player-right'].forEach(id => {
             const el = document.getElementById(id);
-            el.innerHTML = '';
-            el.classList.remove('active-turn');
+            if (el) {
+                el.innerHTML = '';
+                el.classList.remove('active-turn');
+            }
         });
 
         opponents.forEach((opp, i) => {
             let oppPos = i;
-            if (opponents.length === 1) oppPos = 0; // top
-            if (opponents.length === 2) oppPos = i === 0 ? 1 : 2; // left, right
+            if (opponents.length === 1) oppPos = 0;
+            if (opponents.length === 2) oppPos = i === 0 ? 1 : 2;
 
             let targetId = 'player-top';
             if (oppPos === 1) targetId = 'player-left';
             if (oppPos === 2) targetId = 'player-right';
 
             const oppArea = document.getElementById(targetId);
+            if (!oppArea) return;
+
             let oppCoinsText = opp.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, opp.coins));
             if (opp.isOut) oppCoinsText = "<span style='font-size:1.6em; line-height:1;'>☠️</span>";
 
@@ -441,105 +356,115 @@ function renderGameState(state) {
     }
 }
 
-startGameBtn.addEventListener('click', () => {
-    socket.emit('startGame', { roomId: currentRoomId });
-});
+// Action Handlers
+if (swapAllBtn) {
+    swapAllBtn.addEventListener('click', () => {
+        const playerId = getMyPlayerId();
+        const me = currentGameState?.players.find(p => p.pId === playerId || p.pId === socket.id);
+        if (!me || !me.isCurrentTurn) {
+            showToast("Du bist nicht an der Reihe!");
+            return;
+        }
+        if (me.hand.length !== 3) {
+            showToast("Bitte beende zuerst deinen Tausch (ziehe bzw. lege eine Karte ab)!");
+            return;
+        }
+        if (!me.canSwapAll) {
+            showToast("Alle tauschen geht nur mit 3 unterschiedlichen Farben auf der Hand!");
+            return;
+        }
 
-swapAllBtn.addEventListener('click', () => {
-    const me = currentGameState?.players.find(p => p.pId === playerId);
-    if (!me || !me.isCurrentTurn) {
-        showToast("Du bist nicht an der Reihe!");
-        return;
-    }
-    if (me.hand.length !== 3) {
-        showToast("Bitte beende zuerst deinen Tausch (ziehe bzw. lege eine Karte ab)!");
-        return;
-    }
-    if (!me.canSwapAll) {
-        showToast("Alle tauschen geht nur mit 3 unterschiedlichen Farben auf der Hand!");
-        return;
-    }
+        confirmModal.classList.remove('hidden');
+    });
+}
 
-    // Show custom confirm dialog
-    confirmModal.classList.remove('hidden');
-});
+if (confirmYesBtn) {
+    confirmYesBtn.addEventListener('click', () => {
+        confirmModal.classList.add('hidden');
+        socket.emit('swapAll', { roomId: getMyRoomCode(), playerId: getMyPlayerId() });
+    });
+}
 
-confirmYesBtn.addEventListener('click', () => {
-    confirmModal.classList.add('hidden');
-    socket.emit('swapAll', { roomId: currentRoomId, playerId });
-});
+if (confirmNoBtn) {
+    confirmNoBtn.addEventListener('click', () => {
+        confirmModal.classList.add('hidden');
+    });
+}
 
-confirmNoBtn.addEventListener('click', () => {
-    confirmModal.classList.add('hidden');
-});
+if (passBtn) {
+    passBtn.addEventListener('click', () => {
+        const playerId = getMyPlayerId();
+        const me = currentGameState?.players.find(p => p.pId === playerId || p.pId === socket.id);
+        if (!me || !me.isCurrentTurn) {
+            showToast("Du bist nicht an der Reihe!");
+            return;
+        }
+        if (me.hand.length !== 3) {
+            showToast("Bitte beende zuerst deinen Tausch (ziehe bzw. lege eine Karte ab)!");
+            return;
+        }
+        socket.emit('pass', { roomId: getMyRoomCode(), playerId });
+    });
+}
 
-passBtn.addEventListener('click', () => {
-    const me = currentGameState?.players.find(p => p.pId === playerId);
-    if (!me || !me.isCurrentTurn) {
-        showToast("Du bist nicht an der Reihe!");
-        return;
-    }
-    if (me.hand.length !== 3) {
-        showToast("Bitte beende zuerst deinen Tausch (ziehe bzw. lege eine Karte ab)!");
-        return;
-    }
-    socket.emit('pass', { roomId: currentRoomId, playerId });
-});
+if (knockBtn) {
+    knockBtn.addEventListener('click', () => {
+        const playerId = getMyPlayerId();
+        const me = currentGameState?.players.find(p => p.pId === playerId || p.pId === socket.id);
+        if (!me || !me.isCurrentTurn) {
+            showToast("Du bist nicht an der Reihe!");
+            return;
+        }
+        if (me.hand.length !== 3) {
+            showToast("Bitte beende zuerst deinen Tausch (ziehe bzw. lege eine Karte ab)!");
+            return;
+        }
+        if (currentGameState.knockedPlayerId) {
+            showToast("Es wurde bereits geklopft!");
+            return;
+        }
+        socket.emit('knock', { roomId: getMyRoomCode(), playerId });
+    });
+}
 
-knockBtn.addEventListener('click', () => {
-    const me = currentGameState?.players.find(p => p.pId === playerId);
-    if (!me || !me.isCurrentTurn) {
-        showToast("Du bist nicht an der Reihe!");
-        return;
-    }
-    if (me.hand.length !== 3) {
-        showToast("Bitte beende zuerst deinen Tausch (ziehe bzw. lege eine Karte ab)!");
-        return;
-    }
-    if (currentGameState.knockedPlayerId) {
-        showToast("Es wurde bereits geklopft!");
-        return;
-    }
-    socket.emit('knock', { roomId: currentRoomId, playerId });
-});
+if (backToLobbyBtn) {
+    backToLobbyBtn.addEventListener('click', () => {
+        location.reload();
+    });
+}
 
-backToLobbyBtn.addEventListener('click', () => {
-    location.reload();
-});
+if (nextRoundBtn) {
+    nextRoundBtn.addEventListener('click', () => {
+        socket.emit('startNextRound', { roomId: getMyRoomCode() });
+    });
+}
 
-nextRoundBtn.addEventListener('click', () => {
-    socket.emit('startNextRound', { roomId: currentRoomId });
-});
-
-playAgainBtn.addEventListener('click', () => {
-    socket.emit('startGame', { roomId: currentRoomId });
-});
+if (playAgainBtn) {
+    playAgainBtn.addEventListener('click', () => {
+        socket.emit('startGame', { roomId: getMyRoomCode() });
+    });
+}
 
 // ------------------------------------------------------------------
 // SOCKET EVENTS
 // ------------------------------------------------------------------
+
 socket.on('connect', () => {
-    statusDiv.textContent = 'Verbunden!';
-    statusDiv.style.color = 'lightgreen';
+    if (statusDiv) {
+        statusDiv.textContent = 'Verbunden!';
+        statusDiv.style.color = 'lightgreen';
+    }
 });
 
 socket.on('disconnect', () => {
-    statusDiv.textContent = 'Verbindung verloren.';
-    statusDiv.style.color = 'red';
-    lobbyDiv.style.display = 'block';
-    gameDiv.style.display = 'none';
+    if (statusDiv) {
+        statusDiv.textContent = 'Verbindung verloren.';
+        statusDiv.style.color = 'red';
+    }
 });
 
 socket.on('error', (msg) => {
     alert(msg);
-});
-
-socket.on('roomCreated', ({ roomId }) => {
-    showGame(roomId);
-});
-
-socket.on('roomJoined', ({ roomId }) => {
-    showGame(roomId);
 });
 
 socket.on('toast_msg', (msg) => {
@@ -551,17 +476,10 @@ socket.on('gameState', (state) => {
 });
 
 socket.on('gameStateBroadcast', () => {
-    if (currentRoomId) {
-        socket.emit('requestState', { roomId: currentRoomId, playerId });
+    const roomCode = getMyRoomCode();
+    if (roomCode) {
+        socket.emit('requestState', { roomId: roomCode, playerId: getMyPlayerId() });
     }
-});
-
-socket.on('playerJoined', ({ name }) => {
-    console.log(`${name} joined`);
-});
-
-socket.on('playerLeft', ({ name }) => {
-    console.log(`${name} left`);
 });
 
 // ------------------------------------------------------------------
@@ -581,7 +499,8 @@ if (gameBoard) {
         try {
             const data = JSON.parse(rawData);
             if (data.source === 'hand') {
-                const me = currentGameState?.players.find(p => p.pId === playerId);
+                const playerId = getMyPlayerId();
+                const me = currentGameState?.players.find(p => p.pId === playerId || p.pId === socket.id);
                 if (!me) return;
                 if (!me.isCurrentTurn) {
                     showToast("Du bist nicht an der Reihe!");
@@ -595,7 +514,7 @@ if (gameBoard) {
                     showToast("Das Spiel läuft gerade nicht!");
                     return;
                 }
-                socket.emit('discardToCenter', { roomId: currentRoomId, playerId, handIndex: data.index });
+                socket.emit('discardToCenter', { roomId: getMyRoomCode(), playerId, handIndex: data.index });
             }
         } catch (err) {
             console.error('Drop parsing error', err);
@@ -606,19 +525,20 @@ if (gameBoard) {
 if (myCardsEl) {
     myCardsEl.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.stopPropagation(); // Stop from bubbling to gameBoard (stops discard)
+        e.stopPropagation();
         e.dataTransfer.dropEffect = 'move';
     });
 
     myCardsEl.addEventListener('drop', (e) => {
         e.preventDefault();
-        e.stopPropagation(); // Stop from bubbling to gameBoard
+        e.stopPropagation();
         const rawData = e.dataTransfer.getData('text/plain');
         if (!rawData) return;
         try {
             const data = JSON.parse(rawData);
             if (data.source === 'center') {
-                const me = currentGameState?.players.find(p => p.pId === playerId);
+                const playerId = getMyPlayerId();
+                const me = currentGameState?.players.find(p => p.pId === playerId || p.pId === socket.id);
                 if (!me) return;
                 if (!me.isCurrentTurn) {
                     showToast("Du bist nicht an der Reihe!");
@@ -632,7 +552,7 @@ if (myCardsEl) {
                     showToast("Das Spiel läuft gerade nicht!");
                     return;
                 }
-                socket.emit('drawFromCenter', { roomId: currentRoomId, playerId, centerIndex: data.index });
+                socket.emit('drawFromCenter', { roomId: getMyRoomCode(), playerId, centerIndex: data.index });
             }
         } catch (err) {
             console.error('Drop parsing error', err);

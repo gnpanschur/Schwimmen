@@ -2,8 +2,9 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const { generateRoomCode } = require('./utils/roomCode');
 const { Game } = require('./game');
+const LobbyManager = require('./lobby/LobbyManager');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -14,180 +15,139 @@ const io = new Server(server, {
 });
 
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/shared', express.static(path.join(__dirname, 'shared')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Basic Room Manager (In-memory storage)
-const rooms = new Map(); // roomId -> Game instance
+// Map of roomId -> Game instance
+const games = new Map();
+
+// Initialize Lobby-Manager for Schwimmen
+const lobbyManager = new LobbyManager(io, {
+    gameId: 'schwimmen',
+    gameTitle: 'Schwimmen',
+    minPlayers: 2,
+    maxPlayers: 4
+});
+
+// Callback when Host clicks "Spiel Starten" and room conditions are met
+lobbyManager.onGameStart((room, hostSocketId) => {
+    console.log(`[Game] Starting Schwimmen game for room ${room.code}`);
+    const game = new Game(room.code);
+    for (const player of room.players) {
+        game.addPlayer(player.id, player.name, player.id);
+    }
+    game.start();
+    games.set(room.code, game);
+
+    // Broadcast state update to everyone in room
+    io.to(room.code).emit('gameStateBroadcast');
+});
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    socket.on('createRoom', ({ name, playerId, customRoomId }) => {
-        let roomId;
-        if (customRoomId) {
-            roomId = customRoomId.toLowerCase();
-            if (rooms.has(roomId)) {
-                socket.emit('error', 'Raum existiert bereits! Benutze einen anderen Gegner-Namen.');
-                return;
-            }
-        } else {
-            roomId = generateRoomCode();
-        }
+    // Attach standard lobby event listeners
+    lobbyManager.attachSocketListeners(socket);
 
-        const game = new Game(roomId);
-        game.addPlayer(socket.id, name, playerId);
-        rooms.set(roomId, game);
-
-        socket.join(roomId);
-        socket.emit('roomCreated', { roomId, playerId });
-        console.log(`Room ${roomId} created by ${name}`);
-        // Send initial state to let the creator see the lobby
-        io.to(roomId).emit('gameState', game.getState(playerId));
-    });
-
-    socket.on('joinRoom', ({ roomId, playerName, playerId }) => {
-        const room = rooms.get(roomId);
-
-        if (!room) {
-            socket.emit('error', 'Raum nicht gefunden! Hat der Ersteller den Raum schon geöffnet?');
-            return;
-        }
-
-        if (room.players.length >= 4) {
-            socket.emit('error', 'Raum ist bereits voll (max. 4 Spieler)!');
-            return;
-        }
-
-        if (room.status !== 'waiting') {
-            socket.emit('error', 'Spiel läuft bereits!');
-            return;
-        }
-
-        room.addPlayer(socket.id, playerName, playerId);
-
-        socket.join(roomId);
-        socket.emit('roomJoined', { roomId, playerId });
-
-        // Notify people that someone joined
-        io.to(roomId).emit('playerJoined', { name: playerName });
-        console.log(`${playerName} joined room ${roomId}`);
-
-        // We emit getState without a specific player id first so everyone updates
-        // Then we can send individual states if necessary, or just broadcast without hand info
-        // and let clients request their own state. For now, broadcasting is fine since clients filter internally.
-
-        io.to(roomId).emit('gameStateBroadcast'); // We need to handle this broadcasting
-    });
-
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-        for (const [roomId, room] of rooms.entries()) {
-            const playerIndex = room.players.findIndex(p => p.id === socket.id);
-            if (playerIndex !== -1) {
-                const player = room.players[playerIndex];
-                // Do not remove player from game on simple disconnect immediately, 
-                // in case they are just refreshing. 
-                // But if waiting, remove them.
-                if (room.status === 'waiting') {
-                    room.removePlayer(player.pId);
-                    io.to(roomId).emit('playerLeft', { name: player.name });
-                    if (room.players.length === 0) {
-                        rooms.delete(roomId);
-                    } else {
-                        io.to(roomId).emit('gameStateBroadcast');
-                    }
-                }
-                break;
-            }
-        }
-    });
-
-    // NEW: Clients request their specific state explicitly
+    // Schwimmen specific game listeners
     socket.on('requestState', ({ roomId, playerId }) => {
-        const room = rooms.get(roomId);
-        if (room) {
-            // Update the connection id if they refreshed
-            const player = room.players.find(p => p.pId === playerId);
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        if (game) {
+            const player = game.players.find(p => p.pId === playerId || p.id === socket.id);
             if (player) {
                 player.id = socket.id;
             }
-            socket.emit('gameState', room.getState(playerId));
-        }
-    });
-
-    socket.on('startGame', ({ roomId }) => {
-        const room = rooms.get(roomId);
-        if (room && room.start()) {
-            io.to(roomId).emit('gameStateBroadcast');
+            socket.emit('gameState', game.getState(playerId || socket.id));
         }
     });
 
     socket.on('startNextRound', ({ roomId }) => {
-        const room = rooms.get(roomId);
-        if (room && room.startNextRound()) {
-            io.to(roomId).emit('gameStateBroadcast');
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        if (game && game.startNextRound()) {
+            io.to(targetRoomCode).emit('gameStateBroadcast');
+        }
+    });
+
+    socket.on('startGame', ({ roomId }) => {
+        // Re-start / play again support
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        if (game && game.start()) {
+            io.to(targetRoomCode).emit('gameStateBroadcast');
         }
     });
 
     socket.on('drawFromCenter', ({ roomId, playerId, centerIndex }) => {
-        const room = rooms.get(roomId);
-        if (room && room.drawFromCenter(playerId, centerIndex)) {
-            const p = room.players.find(x => x.pId === playerId);
-            if (p && p.hand.length === 3 && room.centerCards.length === 3) {
-                room.nextTurn();
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        const pId = playerId || socket.id;
+        if (game && game.drawFromCenter(pId, centerIndex)) {
+            const p = game.players.find(x => x.pId === pId);
+            if (p && p.hand.length === 3 && game.centerCards.length === 3) {
+                game.nextTurn();
             }
-            io.to(roomId).emit('gameStateBroadcast');
+            io.to(targetRoomCode).emit('gameStateBroadcast');
         }
     });
 
     socket.on('discardToCenter', ({ roomId, playerId, handIndex }) => {
-        const room = rooms.get(roomId);
-        if (room && room.discardToCenter(playerId, handIndex)) {
-            const p = room.players.find(x => x.pId === playerId);
-            if (p && p.hand.length === 3 && room.centerCards.length === 3) {
-                room.nextTurn();
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        const pId = playerId || socket.id;
+        if (game && game.discardToCenter(pId, handIndex)) {
+            const p = game.players.find(x => x.pId === pId);
+            if (p && p.hand.length === 3 && game.centerCards.length === 3) {
+                game.nextTurn();
             }
-            io.to(roomId).emit('gameStateBroadcast');
+            io.to(targetRoomCode).emit('gameStateBroadcast');
         }
     });
 
     socket.on('swapAll', ({ roomId, playerId }) => {
-        const room = rooms.get(roomId);
-        if (room) {
-            const player = room.players.find(p => p.pId === playerId);
-            if (player && room.swapAll(playerId)) {
-                io.to(roomId).emit('toast_msg', `${player.name} hat alle 3 Karten getauscht!`);
-                room.nextTurn();
-                io.to(roomId).emit('gameStateBroadcast');
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        const pId = playerId || socket.id;
+        if (game) {
+            const player = game.players.find(p => p.pId === pId);
+            if (player && game.swapAll(pId)) {
+                io.to(targetRoomCode).emit('toast_msg', `${player.name} hat alle 3 Karten getauscht!`);
+                game.nextTurn();
+                io.to(targetRoomCode).emit('gameStateBroadcast');
             }
         }
     });
 
     socket.on('pass', ({ roomId, playerId }) => {
-        const room = rooms.get(roomId);
-        if (room && room.pass(playerId)) {
-            room.nextTurn();
-            io.to(roomId).emit('gameStateBroadcast');
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        const pId = playerId || socket.id;
+        if (game && game.pass(pId)) {
+            game.nextTurn();
+            io.to(targetRoomCode).emit('gameStateBroadcast');
         }
     });
 
     socket.on('knock', ({ roomId, playerId }) => {
-        const room = rooms.get(roomId);
-        if (room) {
-            const player = room.players.find(p => p.pId === playerId);
-            if (player && room.knock(playerId)) {
-                io.to(roomId).emit('toast_msg', `${player.name} hat Stop gesagt!`);
-                room.nextTurn();
-                io.to(roomId).emit('gameStateBroadcast');
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        const pId = playerId || socket.id;
+        if (game) {
+            const player = game.players.find(p => p.pId === pId);
+            if (player && game.knock(pId)) {
+                io.to(targetRoomCode).emit('toast_msg', `${player.name} hat Stop gesagt!`);
+                game.nextTurn();
+                io.to(targetRoomCode).emit('gameStateBroadcast');
             }
         }
     });
 });
 
-const PORT = process.env.PORT || 3002; // Using 3002 to avoid conflict with SchnapsenPro (3001)
+const PORT = process.env.PORT || 3002;
 server.listen(PORT, () => {
-    console.log(`Lobby Template Server running on http://localhost:${PORT}`);
+    console.log(`Schwimmen Server with Lobby-Basis running on http://localhost:${PORT}`);
 });
