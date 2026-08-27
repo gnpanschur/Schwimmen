@@ -50,9 +50,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const playersList = document.getElementById('players-list');
 
   // Saved Player Name aus localStorage laden
-  const savedName = localStorage.getItem(config.storageKeyName);
+  const savedName = localStorage.getItem(config.storageKeyName) || sessionStorage.getItem(config.storageKeyName);
   if (savedName && playerNameInput) {
     playerNameInput.value = savedName;
+  }
+
+  // Auto-Save Player Name bei Eingabe
+  if (playerNameInput) {
+    playerNameInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        localStorage.setItem(config.storageKeyName, val);
+      }
+    });
   }
 
   // URL-Parameter prüfen (z. B. ?room=K9X2 oder ?code=K9X2)
@@ -75,14 +85,33 @@ document.addEventListener('DOMContentLoaded', () => {
       btnJoinRoom.classList.add('btn-glow');
     }
 
+    // Automatischer Beitritt ohne manuellen Klick bei gespeichertem Namen
+    const executeAutoJoin = () => {
+      const currentName = playerNameInput ? playerNameInput.value.trim() : savedName;
+      if (currentName && code.length === 4) {
+        console.log(`[Lobby] Auto-joining room ${code} as ${currentName}...`);
+        localStorage.setItem(config.storageKeyName, currentName);
+        window.socketClient.joinRoom(code, currentName, true, (res) => {
+          if (res && res.success) {
+            showScreen('lobby');
+          } else if (res && !res.success) {
+            showError(res.message || 'Beitritt fehlgeschlagen');
+          }
+        });
+      }
+    };
+
     if (savedName) {
-      setTimeout(() => {
-        if (roomCodeInput.value.trim().length === 4 && playerNameInput.value.trim()) {
-          btnJoinRoom.click();
-        }
-      }, 300);
-    } else {
-      setTimeout(() => playerNameInput.focus(), 300);
+      if (window.socketClient && window.socketClient.socket && window.socketClient.socket.connected) {
+        executeAutoJoin();
+      } else if (window.socketClient && window.socketClient.socket) {
+        window.socketClient.socket.once('connect', executeAutoJoin);
+        setTimeout(executeAutoJoin, 250);
+      } else {
+        setTimeout(executeAutoJoin, 250);
+      }
+    } else if (playerNameInput) {
+      setTimeout(() => playerNameInput.focus(), 200);
     }
   }
 
