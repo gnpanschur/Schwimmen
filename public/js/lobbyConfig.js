@@ -19,7 +19,7 @@ const GAME_LOBBY_CONFIG = {
 
   // Lobby-Parameter
   minPlayers: 2,
-  maxPlayers: 4,
+  maxPlayers: 6,
   
   // Storage Key für den Spielernamen
   storageKeyName: 'schwimmen_player_name',

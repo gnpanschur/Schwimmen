@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const config = window.GAME_LOBBY_CONFIG || {
     storageKeyName: 'schwimmen_player_name',
     minPlayers: 2,
-    maxPlayers: 4
+    maxPlayers: 6
   };
 
   // UI Screens

@@ -50,7 +50,7 @@ class Game {
     }
 
     addPlayer(id, name, pId) {
-        if (this.players.length < 4 && this.status === 'waiting') {
+        if (this.players.length < 6 && this.status === 'waiting') {
             this.players.push({ id, name, pId, hand: [], hasKnocked: false, active: true, coins: 3, isOut: false, lostLifeThisRound: false, score: 0 });
             return true;
         }

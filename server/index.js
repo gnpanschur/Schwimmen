@@ -29,7 +29,7 @@ const lobbyManager = new LobbyManager(io, {
     gameId: 'schwimmen',
     gameTitle: 'Schwimmen',
     minPlayers: 2,
-    maxPlayers: 4
+    maxPlayers: 6
 });
 
 // Callback when Host clicks "Spiel Starten" and room conditions are met

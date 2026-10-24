@@ -7,7 +7,7 @@ const DEFAULT_LOBBY_CONFIG = {
   gameTitle: 'Schwimmen',
   roomCodeLength: 4,
   minPlayers: 2,
-  maxPlayers: 4,
+  maxPlayers: 6,
   requireReady: true,
   emptyRoomTimeoutMs: 60000, // 60 Sekunden bis ein leerer Raum gelöscht wird
   maxPlayerNameLength: 12

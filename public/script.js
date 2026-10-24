@@ -140,7 +140,6 @@ function renderCard(card, isMini = false) {
 
     if (!card) {
         if (isMini) {
-            el.className = 'card playing-card mini-card';
             const img = document.createElement('img');
             img.src = 'Doppeldeutsch_6-Ass/back.webp';
             img.className = 'card-img';
@@ -152,21 +151,13 @@ function renderCard(card, isMini = false) {
         return el;
     }
 
-    if (isMini) {
-        const img = document.createElement('img');
-        img.src = 'Doppeldeutsch_6-Ass/back.webp';
-        img.className = 'card-img';
-        img.draggable = false;
-        el.appendChild(img);
-    } else {
-        const suitMap = { Heart: 'HEARTS', Diamond: 'DIAMONDS', Club: 'CLUBS', Spade: 'SPADES' };
-        const suitName = suitMap[card.suit] || card.suit.toUpperCase() + 'S';
-        const img = document.createElement('img');
-        img.src = `Doppeldeutsch_6-Ass/${suitName}_${card.face}.webp`;
-        img.className = 'card-img';
-        img.draggable = false;
-        el.appendChild(img);
-    }
+    const suitMap = { Heart: 'HEARTS', Diamond: 'DIAMONDS', Club: 'CLUBS', Spade: 'SPADES' };
+    const suitName = suitMap[card.suit] || card.suit.toUpperCase() + 'S';
+    const img = document.createElement('img');
+    img.src = `Doppeldeutsch_6-Ass/${suitName}_${card.face}.webp`;
+    img.className = 'card-img';
+    img.draggable = false;
+    el.appendChild(img);
     return el;
 }
 
@@ -270,8 +261,16 @@ function renderGameState(state) {
             });
         }
 
-        // Render Players
-        const opponents = state.players.filter(p => p.pId !== playerId && p.pId !== socket.id);
+        // Render Players (Clockwise starting with next player after me)
+        const myIndex = state.players.findIndex(p => p.pId === playerId || p.pId === socket.id);
+        const opponents = [];
+        if (myIndex !== -1) {
+            for (let step = 1; step < state.players.length; step++) {
+                opponents.push(state.players[(myIndex + step) % state.players.length]);
+            }
+        } else {
+            opponents.push(...state.players.filter(p => p.pId !== playerId && p.pId !== socket.id));
+        }
 
         if (me) {
             let meCoinsText = me.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, me.coins));
@@ -336,26 +335,50 @@ function renderGameState(state) {
             }
         }
 
-        const positions = ['top-area', 'left-area', 'right-area'];
-        ['player-top', 'player-left', 'player-right'].forEach(id => {
+        // Toggle 6-players layout class on game board if 4 or 5 opponents
+        const isSixPlayers = opponents.length >= 4;
+        if (gameBoard) {
+            gameBoard.classList.toggle('six-players-layout', isSixPlayers);
+        }
+
+        const allOpponentSlotIds = [
+            'player-top',
+            'player-left-top',
+            'player-left-bottom',
+            'player-right-top',
+            'player-right-bottom'
+        ];
+
+        allOpponentSlotIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 el.innerHTML = '';
                 el.classList.remove('active-turn');
+                el.style.display = 'none';
             }
         });
 
-        opponents.forEach((opp, i) => {
-            let oppPos = i;
-            if (opponents.length === 1) oppPos = 0;
-            if (opponents.length === 2) oppPos = i === 0 ? 1 : 2;
+        let targetSlotIds = [];
+        if (opponents.length === 1) {
+            targetSlotIds = ['player-top'];
+        } else if (opponents.length === 2) {
+            targetSlotIds = ['player-left-top', 'player-right-top'];
+        } else if (opponents.length === 3) {
+            targetSlotIds = ['player-left-top', 'player-top', 'player-right-top'];
+        } else if (opponents.length === 4) {
+            targetSlotIds = ['player-left-bottom', 'player-left-top', 'player-right-top', 'player-right-bottom'];
+        } else if (opponents.length >= 5) {
+            targetSlotIds = ['player-left-bottom', 'player-left-top', 'player-top', 'player-right-top', 'player-right-bottom'];
+        }
 
-            let targetId = 'player-top';
-            if (oppPos === 1) targetId = 'player-left';
-            if (oppPos === 2) targetId = 'player-right';
+        opponents.forEach((opp, i) => {
+            const targetId = targetSlotIds[i];
+            if (!targetId) return;
 
             const oppArea = document.getElementById(targetId);
             if (!oppArea) return;
+
+            oppArea.style.display = 'block';
 
             let oppCoinsText = opp.coins === 0 ? "ist Gast" : '<span class="coin-emoji">🪙</span>'.repeat(Math.max(0, opp.coins));
             if (opp.isOut) oppCoinsText = "<span style='font-size:1.6em; line-height:1;'>☠️</span>";
@@ -365,7 +388,7 @@ function renderGameState(state) {
 
             const cardContainer = oppArea.querySelector('div:nth-child(2)');
             if ((state.status === 'finished' || state.status === 'game_over') && opp.hand) {
-                opp.hand.forEach(c => cardContainer.appendChild(renderCard(c)));
+                opp.hand.forEach(c => cardContainer.appendChild(renderCard(c, true)));
             } else {
                 for (let j = 0; j < opp.cardCount; j++) {
                     cardContainer.appendChild(renderCard(null, true));

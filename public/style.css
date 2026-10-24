@@ -138,6 +138,61 @@ input[type="text"] {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+/* ================= GAME BOARD & 6-PLAYER LAYOUT ================= */
+.player-area {
+  position: absolute;
+  text-align: center;
+  z-index: 5;
+  transition: top 0.3s ease, left 0.3s ease, right 0.3s ease;
+}
+
+#player-top {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+#player-left-top {
+  top: 38%;
+  left: 40px;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+#player-right-top {
+  top: 38%;
+  right: 40px;
+  transform: translate(50%, -50%) rotate(-90deg);
+}
+
+#player-left-bottom {
+  top: 61%;
+  left: 40px;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+#player-right-bottom {
+  top: 61%;
+  right: 40px;
+  transform: translate(50%, -50%) rotate(-90deg);
+}
+
+/* 6-Player layout (2 left, 1 top, 2 right, 1 bottom) */
+.six-players-layout #player-left-top {
+  top: 24%;
+}
+
+.six-players-layout #player-left-bottom {
+  top: 61%;
+}
+
+.six-players-layout #player-right-top {
+  top: 24%;
+}
+
+.six-players-layout #player-right-bottom {
+  top: 61%;
+}
+
 /* Glassmorphic Panel Card */
 .card-glass {
   background: var(--bg-card);
@@ -595,14 +650,33 @@ input[type="text"]:focus {
     margin: 0 !important;
   }
 
-  #player-left {
-    left: 5px !important;
-    top: 30% !important;
+  #player-left-top, #player-left-bottom {
+    left: 28px !important;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.85) !important;
   }
 
-  #player-right {
-    right: 5px !important;
-    top: 30% !important;
+  #player-right-top, #player-right-bottom {
+    right: 28px !important;
+    transform: translate(50%, -50%) rotate(-90deg) scale(0.85) !important;
+  }
+
+  #player-left-top, #player-right-top {
+    top: 38% !important;
+  }
+
+  .six-players-layout #player-left-top,
+  .six-players-layout #player-right-top {
+    top: 24% !important;
+  }
+
+  .six-players-layout #player-left-bottom,
+  .six-players-layout #player-right-bottom {
+    top: 61% !important;
+  }
+
+  .left-area .player-info,
+  .right-area .player-info {
+    font-size: 1.15rem !important;
   }
 
   #center-area {
@@ -629,8 +703,10 @@ input[type="text"]:focus {
   }
 
   .end-modal {
-    padding: 20px !important;
+    padding: 18px !important;
     min-width: 175px !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
     border-radius: 10px !important;
     border-width: 2px !important;
   }
@@ -651,5 +727,13 @@ input[type="text"]:focus {
   #player-top {
     transform: translateX(-50%) scale(0.9) !important;
     transform-origin: center top !important;
+  }
+
+  #player-left-top, #player-left-bottom {
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.85) !important;
+  }
+
+  #player-right-top, #player-right-bottom {
+    transform: translate(50%, -50%) rotate(-90deg) scale(0.85) !important;
   }
 }
