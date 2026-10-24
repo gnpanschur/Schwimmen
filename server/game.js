@@ -57,17 +57,88 @@ class Game {
         return false;
     }
 
-    removePlayer(pId) {
-        this.players = this.players.filter(p => p.pId !== pId);
+    removePlayer(idOrPId) {
+        const index = this.players.findIndex(p => p.pId === idOrPId || p.id === idOrPId);
+        if (index === -1) return { removed: false };
+
+        const removedPlayer = this.players[index];
+
+        // Restore center cards to exactly 3 if leaving player was mid-swap
+        if (this.centerCards.length === 2 && removedPlayer.hand.length === 4) {
+            this.centerCards.push(removedPlayer.hand.pop());
+        } else if (this.centerCards.length === 4) {
+            this.centerCards.pop();
+        }
+
+        const wasTheirTurn = (this.status === 'playing' && this.turnIndex === index);
+
+        // Remove player from game
+        this.players.splice(index, 1);
+
+        // Adjust roundStarterIndex
+        if (index < this.roundStarterIndex) {
+            this.roundStarterIndex--;
+        }
+        if (this.players.length > 0 && this.roundStarterIndex >= this.players.length) {
+            this.roundStarterIndex = 0;
+        }
+
         if (this.status === 'playing') {
-            if (this.players.length < 2) {
-                this.status = 'waiting';
-                return;
+            const survivors = this.players.filter(p => !p.isOut);
+
+            // If 1 or 0 players remain, the last player wins!
+            if (survivors.length <= 1) {
+                this.status = 'game_over';
+                if (survivors.length === 1) {
+                    survivors[0].coins += this.pot;
+                    this.pot = 0;
+                }
+                return { removed: true, player: removedPlayer };
+            }
+
+            // If the knocker left: finish round immediately
+            if (this.knockedPlayerId === removedPlayer.pId || this.knockedPlayerId === removedPlayer.id) {
+                this.finish();
+                return { removed: true, player: removedPlayer };
+            }
+
+            // Adjust turnIndex
+            if (index < this.turnIndex) {
+                this.turnIndex--;
             }
             if (this.turnIndex >= this.players.length) {
                 this.turnIndex = 0;
             }
+
+            // If it was their turn or current turn lands on an eliminated player, advance to next active player
+            if (wasTheirTurn || (this.players[this.turnIndex] && this.players[this.turnIndex].isOut)) {
+                let initialTurn = this.turnIndex;
+                while (this.players[this.turnIndex] && this.players[this.turnIndex].isOut) {
+                    this.turnIndex = (this.turnIndex + 1) % this.players.length;
+                    if (this.turnIndex === initialTurn) break;
+                }
+            }
+
+            // If turn now lands on knocker, the round finishes
+            if (this.knockedPlayerId !== null && this.players[this.turnIndex] && this.players[this.turnIndex].pId === this.knockedPlayerId) {
+                this.finish();
+                return { removed: true, player: removedPlayer };
+            }
+
+            // Check thirty-one for remaining players
+            this.checkThirtyOne();
+        } else if (this.status === 'finished') {
+            const survivors = this.players.filter(p => !p.isOut);
+            if (survivors.length <= 1) {
+                this.status = 'game_over';
+                if (survivors.length === 1) {
+                    survivors[0].coins += this.pot;
+                    this.pot = 0;
+                }
+            }
         }
+
+        return { removed: true, player: removedPlayer };
     }
 
     start() {
@@ -252,21 +323,23 @@ class Game {
             }
         }
 
-        // Advance the dealer BEFORE sorting so the index stays valid
-        let initialStarter = this.roundStarterIndex;
-        do {
-            this.roundStarterIndex = (this.roundStarterIndex + 1) % this.players.length;
-        } while (this.players[this.roundStarterIndex].isOut && this.roundStarterIndex !== initialStarter);
-        const nextDealerPId = this.players[this.roundStarterIndex].pId;
+        if (this.status !== 'game_over' && this.players.length > 1) {
+            // Advance the dealer BEFORE sorting so the index stays valid
+            let initialStarter = this.roundStarterIndex;
+            do {
+                this.roundStarterIndex = (this.roundStarterIndex + 1) % this.players.length;
+            } while (this.players[this.roundStarterIndex].isOut && this.roundStarterIndex !== initialStarter);
+            const nextDealerPId = this.players[this.roundStarterIndex].pId;
 
-        this.players.sort((a, b) => {
-            if (a.isOut !== b.isOut) return a.isOut ? 1 : -1;
-            return b.score - a.score;
-        });
+            this.players.sort((a, b) => {
+                if (a.isOut !== b.isOut) return a.isOut ? 1 : -1;
+                return b.score - a.score;
+            });
 
-        // Restore the correct roundStarterIndex after sorting
-        this.roundStarterIndex = this.players.findIndex(p => p.pId === nextDealerPId);
-        if (this.roundStarterIndex === -1) this.roundStarterIndex = 0;
+            // Restore the correct roundStarterIndex after sorting
+            this.roundStarterIndex = this.players.findIndex(p => p.pId === nextDealerPId);
+            if (this.roundStarterIndex === -1) this.roundStarterIndex = 0;
+        }
     }
 
     getState(requestingPId) {

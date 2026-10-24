@@ -46,6 +46,35 @@ lobbyManager.onGameStart((room, hostSocketId) => {
     io.to(room.code).emit('gameStateBroadcast');
 });
 
+function formatPlayerExitMsg(name) {
+    const cleanName = (name || 'Spieler').trim();
+    if (/^spieler\b/i.test(cleanName)) {
+        return `Info: ${cleanName} ausgestiegen`;
+    }
+    return `Info: Spieler ${cleanName} ausgestiegen`;
+}
+
+// Callback when a player leaves or disconnects
+lobbyManager.onPlayerLeave((roomCode, socketId, playerName) => {
+    const game = games.get(roomCode);
+    if (!game) return;
+
+    const playerInGame = game.players.find(p => p.id === socketId || p.pId === socketId);
+    const name = playerInGame?.name || playerName || 'Spieler';
+
+    const result = game.removePlayer(socketId);
+    if (result && result.removed) {
+        console.log(`[Game] Player ${name} (${socketId}) left game in room ${roomCode}`);
+        const exitMsg = formatPlayerExitMsg(name);
+        io.to(roomCode).emit('toast_msg', exitMsg);
+        io.to(roomCode).emit('gameStateBroadcast');
+
+        if (game.players.length === 0) {
+            games.delete(roomCode);
+        }
+    }
+});
+
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 

@@ -77,6 +77,9 @@ function showToast(message) {
 
     const toast = document.createElement('div');
     toast.className = 'toast';
+    if (message.startsWith('Info:')) {
+        toast.classList.add('toast-info');
+    }
     toast.textContent = message;
     container.appendChild(toast);
 
@@ -87,7 +90,7 @@ function showToast(message) {
         setTimeout(() => {
             if (toast.parentElement) toast.remove();
         }, 300);
-    }, 3000);
+    }, 4000);
 }
 
 window.startSchwimmenGameUI = function (roomState) {

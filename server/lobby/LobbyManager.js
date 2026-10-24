@@ -24,6 +24,14 @@ class LobbyManager {
   }
 
   /**
+   * Registriert einen Handler für das Verlassen/Disconnecten eines Spielers
+   * @param {Function} handler - (roomCode: string, socketId: string, playerName: string) => void
+   */
+  onPlayerLeave(handler) {
+    this.onPlayerLeaveHandler = handler;
+  }
+
+  /**
    * Generiert einen eindeutigen Raumcode
    * @returns {string} Unique room code
    */
@@ -157,6 +165,17 @@ class LobbyManager {
     this.socketToRoomMap.delete(socketId);
     const room = this.rooms.get(roomCode);
     if (!room) return;
+
+    const leavingPlayer = room.players.find(p => p.id === socketId);
+    const leavingPlayerName = leavingPlayer ? leavingPlayer.name : null;
+
+    if (this.onPlayerLeaveHandler) {
+      try {
+        this.onPlayerLeaveHandler(roomCode, socketId, leavingPlayerName);
+      } catch (err) {
+        console.error('[LobbyManager] Error in onPlayerLeaveHandler:', err);
+      }
+    }
 
     const isEmpty = room.removePlayer(socketId);
     console.log(`[LobbyManager] Player (${socketId}) left room ${roomCode}. Remaining: ${room.players.length}`);
