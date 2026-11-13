@@ -157,7 +157,7 @@
           <div style="display: flex; gap: 15px;">
             <button id="nextRoundBtn" class="btn btn-primary" style="display: none; background-color: #f39c12;">Nächste Runde</button>
             <button id="playAgainBtn" class="btn btn-success" style="display: none;">Noch ein Spiel?</button>
-            <button id="backToLobbyBtn" class="btn btn-danger">Schließen</button>
+            <button id="summaryBtn" class="btn btn-primary" style="display: none;">🏆 Siegerliste</button>
           </div>
         </div>
 
@@ -210,11 +210,33 @@
     <div class="modal-content" style="max-width: 550px; max-height: 80vh; overflow-y: auto;">
       <h2 style="margin-top: 0; color: var(--accent-blue);">ℹ️ Schwimmen Spielregeln</h2>
       <p style="text-align: left; font-size: 0.95em;">
-        • <strong>Ziel:</strong> Sammle 31 Punkte derselben Farbe (Karo, Herz, Pik, Kreuz) oder ein Set aus drei gleichen Kartenwerten (z.B. 3 Buben = 30.5 Pkt).<br><br>
+        • <strong>Ziel:</strong> Sammle 31 Punkte derselben Farbe (Karo, Herz, Pik, Kreuz) oder ein Set aus drei gleichen Kartenwerten (z.B. 3 Buben = 30.5 Pkt). Genau 2 Asse zählen 22 Pkt.<br><br>
         • <strong>Ablauf:</strong> Wenn du am Zug bist, ziehe eine Karte aus der Mitte und lege eine von deiner Hand ab. Oder tausche alle 3 Karten, wenn sie 3 verschiedene Farben haben.<br><br>
         • <strong>Stop / Klopfen:</strong> Wenn du denkst, dass du die höchste Punktzahl hast, klicke auf Stop. Die anderen Spieler sind noch genau einmal am Zug.
       </p>
       <button id="close-info-btn" class="btn btn-success" style="margin-top: 15px;">Schließen</button>
+    </div>
+  </div>
+
+  <!-- Siegerliste (Resümee) -->
+  <div id="summary-modal" class="modal hidden">
+    <div class="modal-content summary-content">
+      <h2 style="margin-top: 0; color: #FFD700;">🏆 Siegerliste</h2>
+      <div id="summary-info" class="summary-info"></div>
+      <div class="summary-stake">
+        <label for="coinValueInput">Einsatz pro 🪙:</label>
+        <input id="coinValueInput" type="number" min="0" step="5" value="10"> Cent
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="summary-table">
+          <thead>
+            <tr><th>#</th><th>Spieler</th><th>Siege</th><th>🪙 Saldo</th><th>Gewonnen</th><th>Bezahlen</th></tr>
+          </thead>
+          <tbody id="summary-body"></tbody>
+        </table>
+      </div>
+      <div id="summary-payments" class="summary-payments"></div>
+      <button id="close-summary-btn" class="btn btn-success" style="margin-top: 15px;">Zurück</button>
     </div>
   </div>
 

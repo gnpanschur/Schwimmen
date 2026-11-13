@@ -737,3 +737,56 @@ input[type="text"]:focus {
     transform: translate(50%, -50%) rotate(-90deg) scale(0.85) !important;
   }
 }
+/* ================= Siegerliste ================= */
+.summary-content {
+  max-width: 600px;
+  width: 95%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+.summary-info {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+.summary-stake {
+  margin-bottom: 12px;
+}
+.summary-stake input {
+  width: 70px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #888;
+  text-align: right;
+  font-size: 1em;
+}
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95em;
+}
+.summary-table th,
+.summary-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+.summary-table th {
+  color: #FFD700;
+}
+.summary-table td:nth-child(2) {
+  text-align: left;
+  font-weight: bold;
+}
+.summary-plus {
+  color: #2ecc71;
+  font-weight: bold;
+}
+.summary-minus {
+  color: #e74c3c;
+  font-weight: bold;
+}
+.summary-payments {
+  margin-top: 14px;
+  text-align: left;
+  line-height: 1.6;
+}

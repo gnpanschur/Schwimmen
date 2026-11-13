@@ -42,9 +42,12 @@ const confirmNoBtn = document.getElementById('confirm-no-btn');
 const gameBoard = document.getElementById('game-board');
 const endScreen = document.getElementById('end-screen');
 const resultsDiv = document.getElementById('results');
-const backToLobbyBtn = document.getElementById('backToLobbyBtn');
 const nextRoundBtn = document.getElementById('nextRoundBtn');
 const playAgainBtn = document.getElementById('playAgainBtn');
+const summaryBtn = document.getElementById('summaryBtn');
+const summaryModal = document.getElementById('summary-modal');
+const closeSummaryBtn = document.getElementById('close-summary-btn');
+const coinValueInput = document.getElementById('coinValueInput');
 const potDisplay = document.getElementById('pot-display');
 
 const centerCardsEl = document.getElementById('center-cards');
@@ -168,6 +171,10 @@ function renderGameState(state) {
     currentGameState = state;
     const playerId = getMyPlayerId();
 
+    if (summaryModal && !summaryModal.classList.contains('hidden')) {
+        renderSummary(state.summary);
+    }
+
     if (state.status === 'playing' || state.status === 'finished' || state.status === 'game_over') {
         if (window.showScreen) {
             window.showScreen('game');
@@ -188,7 +195,7 @@ function renderGameState(state) {
                 }
                 nextRoundBtn.style.display = 'none';
                 playAgainBtn.style.display = 'inline-block';
-                backToLobbyBtn.style.display = 'inline-block';
+                summaryBtn.style.display = 'inline-block';
             } else {
                 if (state.endedByThirtyOne) {
                     document.getElementById('end-title').innerHTML = `Runde Vorbei!<br><span style="font-size: 0.8em; color: #ff9800; display: block; margin-top: 10px;">Hose (31 Punkte)</span>`;
@@ -197,7 +204,7 @@ function renderGameState(state) {
                 }
                 nextRoundBtn.style.display = 'inline-block';
                 playAgainBtn.style.display = 'none';
-                backToLobbyBtn.style.display = 'none';
+                summaryBtn.style.display = 'none';
             }
         } else {
             endScreen.style.display = 'none';
@@ -476,12 +483,6 @@ if (knockBtn) {
     });
 }
 
-if (backToLobbyBtn) {
-    backToLobbyBtn.addEventListener('click', () => {
-        location.reload();
-    });
-}
-
 if (nextRoundBtn) {
     nextRoundBtn.addEventListener('click', () => {
         socket.emit('startNextRound', { roomId: getMyRoomCode() });
@@ -491,6 +492,94 @@ if (nextRoundBtn) {
 if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
         socket.emit('startGame', { roomId: getMyRoomCode() });
+    });
+}
+
+// ------------------------------------------------------------------
+// SIEGERLISTE (Resümee über mehrere Spiele)
+// ------------------------------------------------------------------
+
+function formatEuro(cents) {
+    return (Math.abs(cents) / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+}
+
+function escapeHtml(text) {
+    return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Wer zahlt wem wieviel (möglichst wenige Zahlungen)
+function computePayments(players) {
+    const debtors = players.filter(p => p.netCents < 0).map(p => ({ name: p.name, amount: -p.netCents }));
+    const creditors = players.filter(p => p.netCents > 0).map(p => ({ name: p.name, amount: p.netCents }));
+    debtors.sort((a, b) => b.amount - a.amount);
+    creditors.sort((a, b) => b.amount - a.amount);
+    const payments = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+        const amount = Math.min(debtors[i].amount, creditors[j].amount);
+        if (amount > 0) payments.push({ from: debtors[i].name, to: creditors[j].name, amount });
+        debtors[i].amount -= amount;
+        creditors[j].amount -= amount;
+        if (debtors[i].amount === 0) i++;
+        if (creditors[j].amount === 0) j++;
+    }
+    return payments;
+}
+
+function renderSummary(summary) {
+    if (!summary) return;
+    const infoEl = document.getElementById('summary-info');
+    const bodyEl = document.getElementById('summary-body');
+    const payEl = document.getElementById('summary-payments');
+
+    infoEl.textContent = `Gespielte Spiele: ${summary.gamesPlayed}`;
+    if (document.activeElement !== coinValueInput) {
+        coinValueInput.value = summary.coinValueCents;
+    }
+
+    if (summary.players.length === 0) {
+        bodyEl.innerHTML = '<tr><td colspan="6">Noch kein Spiel beendet.</td></tr>';
+        payEl.innerHTML = '';
+        return;
+    }
+
+    bodyEl.innerHTML = summary.players.map((p, i) => {
+        const coinsText = p.netCoins > 0 ? `+${p.netCoins}` : `${p.netCoins}`;
+        return `<tr>
+            <td>${i + 1}.</td>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${p.wins}</td>
+            <td>${coinsText}</td>
+            <td class="summary-plus">${p.netCents > 0 ? formatEuro(p.netCents) : '-'}</td>
+            <td class="summary-minus">${p.netCents < 0 ? formatEuro(p.netCents) : '-'}</td>
+        </tr>`;
+    }).join('');
+
+    const payments = computePayments(summary.players);
+    if (payments.length === 0) {
+        payEl.innerHTML = '<em>Niemand muss etwas bezahlen.</em>';
+    } else {
+        payEl.innerHTML = '<strong>Abrechnung:</strong><br>' + payments.map(pm =>
+            `${escapeHtml(pm.from)} zahlt <span class="summary-plus">${formatEuro(pm.amount)}</span> an ${escapeHtml(pm.to)}`
+        ).join('<br>');
+    }
+}
+
+if (summaryBtn) {
+    summaryBtn.addEventListener('click', () => {
+        renderSummary(currentGameState && currentGameState.summary);
+        summaryModal.classList.remove('hidden');
+    });
+}
+if (closeSummaryBtn) {
+    closeSummaryBtn.addEventListener('click', () => summaryModal.classList.add('hidden'));
+}
+if (coinValueInput) {
+    coinValueInput.addEventListener('change', () => {
+        const cents = parseInt(coinValueInput.value, 10);
+        if (Number.isFinite(cents) && cents >= 0) {
+            socket.emit('setCoinValue', { roomId: getMyRoomCode(), cents });
+        }
     });
 }
 

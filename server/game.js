@@ -28,6 +28,12 @@ function calculateHandTotal(hand) {
         if (suitSum > maxScore) maxScore = suitSum;
     }
 
+    // Exactly 2 aces (different suits) count 22
+    const aceCount = hand.filter(c => c.face === 'A').length;
+    if (aceCount === 2 && maxScore < 22) {
+        maxScore = 22;
+    }
+
     // 3 of a kind yields 30.5
     if (hand.length === 3 && hand[0].face === hand[1].face && hand[1].face === hand[2].face) {
         maxScore = 30.5;
@@ -47,6 +53,80 @@ class Game {
         this.turnsLeftAfterKnock = 0;
         this.pot = 0;
         this.roundStarterIndex = 0;
+
+        // Siegerliste über mehrere Spiele
+        this.coinValueCents = 10; // Einsatz pro Münze (Standard 10 Cent)
+        this.gamesPlayed = 0;
+        this.stats = new Map(); // pId -> { name, wins, games, netCoins }
+        this.resultRecorded = false;
+        this.initialPlayerCount = 0;
+        this.eliminationOrder = [];
+        this.secondPlacePId = null;
+    }
+
+    getStatsEntry(p) {
+        if (!this.stats.has(p.pId)) {
+            this.stats.set(p.pId, { name: p.name, wins: 0, games: 0, netCoins: 0 });
+        }
+        const entry = this.stats.get(p.pId);
+        entry.name = p.name;
+        return entry;
+    }
+
+    // Saldo eines Spielers im laufenden Spiel (Start mit 3 Münzen, ausgeschieden = -3)
+    playerNetCoins(p) {
+        return p.coins - 3;
+    }
+
+    distributePot() {
+        const survivors = this.players.filter(p => !p.isOut);
+        if (survivors.length === 1) {
+            const winner = survivors[0];
+            if (this.initialPlayerCount > 3 && this.eliminationOrder.length > 0 && this.pot > 0) {
+                const runnerUpPId = this.eliminationOrder[this.eliminationOrder.length - 1];
+                const runnerUp = this.players.find(p => p.pId === runnerUpPId);
+                if (runnerUp && runnerUp.pId !== winner.pId) {
+                    const secondShare = Math.min(3, this.pot);
+                    runnerUp.coins += secondShare;
+                    this.pot -= secondShare;
+                    this.secondPlacePId = runnerUp.pId;
+                }
+            }
+            winner.coins += this.pot;
+            this.pot = 0;
+        }
+    }
+
+    recordGameResult() {
+        if (this.resultRecorded) return;
+        this.resultRecorded = true;
+        this.gamesPlayed++;
+        const winner = this.players.find(p => !p.isOut);
+        for (const p of this.players) {
+            const entry = this.getStatsEntry(p);
+            entry.games++;
+            entry.netCoins += this.playerNetCoins(p);
+            if (winner && p.pId === winner.pId) entry.wins++;
+        }
+    }
+
+    setCoinValue(cents) {
+        const v = Math.round(Number(cents));
+        if (!Number.isFinite(v) || v < 0 || v > 100000) return false;
+        this.coinValueCents = v;
+        return true;
+    }
+
+    getSummary() {
+        const players = [...this.stats.values()].map(s => ({
+            name: s.name,
+            wins: s.wins,
+            games: s.games,
+            netCoins: s.netCoins,
+            netCents: s.netCoins * this.coinValueCents
+        }));
+        players.sort((a, b) => b.wins - a.wins || b.netCoins - a.netCoins);
+        return { gamesPlayed: this.gamesPlayed, coinValueCents: this.coinValueCents, players };
     }
 
     addPlayer(id, name, pId) {
@@ -72,6 +152,13 @@ class Game {
 
         const wasTheirTurn = (this.status === 'playing' && this.turnIndex === index);
 
+        // Verlorene Münzen eines Spielers, der mitten im Spiel aussteigt, in die Siegerliste übernehmen
+        if ((this.status === 'playing' || this.status === 'finished') && !this.resultRecorded) {
+            const entry = this.getStatsEntry(removedPlayer);
+            entry.games++;
+            entry.netCoins += this.playerNetCoins(removedPlayer);
+        }
+
         // Remove player from game
         this.players.splice(index, 1);
 
@@ -89,10 +176,8 @@ class Game {
             // If 1 or 0 players remain, the last player wins!
             if (survivors.length <= 1) {
                 this.status = 'game_over';
-                if (survivors.length === 1) {
-                    survivors[0].coins += this.pot;
-                    this.pot = 0;
-                }
+                this.distributePot();
+                this.recordGameResult();
                 return { removed: true, player: removedPlayer };
             }
 
@@ -131,10 +216,8 @@ class Game {
             const survivors = this.players.filter(p => !p.isOut);
             if (survivors.length <= 1) {
                 this.status = 'game_over';
-                if (survivors.length === 1) {
-                    survivors[0].coins += this.pot;
-                    this.pot = 0;
-                }
+                this.distributePot();
+                this.recordGameResult();
             }
         }
 
@@ -151,6 +234,10 @@ class Game {
         this.roundStarterIndex = 0;
         this.pot = 0;
         this.endedByThirtyOne = false;
+        this.resultRecorded = false;
+        this.initialPlayerCount = this.players.length;
+        this.eliminationOrder = [];
+        this.secondPlacePId = null;
 
         for (const player of this.players) {
             player.active = true;
@@ -302,11 +389,17 @@ class Game {
 
         for (const p of activePlayers) {
             if (p.score === lowestScore) {
-                p.coins--;
-                this.pot++;
                 p.lostLifeThisRound = true;
-                if (p.coins < 0) {
+                if (p.coins > 0) {
+                    // Münze in die Kassa
+                    p.coins--;
+                    this.pot++;
+                } else {
+                    // War schon Gast (0 Münzen): scheidet aus, zahlt nichts mehr
                     p.isOut = true;
+                    if (!this.eliminationOrder.includes(p.pId)) {
+                        this.eliminationOrder.push(p.pId);
+                    }
                 }
             } else {
                 p.lostLifeThisRound = false;
@@ -317,10 +410,13 @@ class Game {
         let survivors = this.players.filter(p => !p.isOut);
         if (survivors.length <= 1) {
             this.status = 'game_over';
-            if (survivors.length === 1) {
-                survivors[0].coins += this.pot; // Winner takes all
-                this.pot = 0;
-            }
+            this.distributePot();
+            this.players.sort((a, b) => {
+                if (a.isOut !== b.isOut) return a.isOut ? 1 : -1;
+                if (b.coins !== a.coins) return b.coins - a.coins;
+                return b.score - a.score;
+            });
+            this.recordGameResult();
         }
 
         if (this.status !== 'game_over' && this.players.length > 1) {
@@ -364,7 +460,9 @@ class Game {
             centerCards: this.centerCards,
             deckCount: this.deck.length,
             knockedPlayerId: this.knockedPlayerId,
-            endedByThirtyOne: this.endedByThirtyOne
+            endedByThirtyOne: this.endedByThirtyOne,
+            secondPlacePId: this.secondPlacePId,
+            summary: this.getSummary()
         };
     }
 }

@@ -102,6 +102,14 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('setCoinValue', ({ roomId, cents }) => {
+        const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
+        const game = games.get(targetRoomCode);
+        if (game && game.setCoinValue(cents)) {
+            io.to(targetRoomCode).emit('gameStateBroadcast');
+        }
+    });
+
     socket.on('startGame', ({ roomId }) => {
         // Re-start / play again support
         const targetRoomCode = roomId || lobbyManager.socketToRoomMap.get(socket.id);
